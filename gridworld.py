@@ -1,23 +1,26 @@
+##this software is developed for research purpose by Denis Osipychev
+# DASLAB UIUC 2018
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-##=== Defining grid world constants
-
-WORLD_H = 100
-WORLD_W = 100
-NUM_BLUE = 4
-NUM_RED = 4
-NUM_GRAY = 10
-
-fig = plt.figure(0,figsize=[10,10])
-
 ##=== Defining the refences
-class Team:
+class TeamConst:
     RED = 10
     BLUE = 50
     GRAY = 90
+    NUM_BLUE = 4
+    NUM_RED = 4
+    NUM_UAV = 2
+    NUM_GRAY = 10
+    UAV_STEP = 3
+    UGV_STEP = 1
+    UAV_RANGE = 4
+    UGV_RANGE = 2
     
-class MapCodes:
+class MapConst:
+    WORLD_H = 100
+    WORLD_W = 100
     RED_ZONE = 15
     RED_AGENT = 20
     RED_FLAG = 10
@@ -27,33 +30,33 @@ class MapCodes:
     GRAY_AGENT = 95
     OBSTACLE = 100
     AERIAL_DENIAL = 90
-    
-
-##=== Grid World class
+  
+##=== Environment class definition
 class GridWorld(object):
         
     def __init__(self):
-        self._map_only = np.zeros([WORLD_W,WORLD_H], dtype=int)
+        self._map_only = np.zeros([MapConst.WORLD_W,MapConst.WORLD_H], dtype=int)
 
-        #zones and obstacles
-        self._map_only[:,0:int(WORLD_H/2)] = MapCodes.RED_ZONE
-        self._map_only[:,int(WORLD_H/2):WORLD_H] = MapCodes.BLUE_ZONE
-        self._map_only[10:35,10:35] = MapCodes.OBSTACLE
-        self._map_only[10:35,65:90] = MapCodes.OBSTACLE
-        self._map_only[65:90,10:35] = MapCodes.OBSTACLE
-        self._map_only[65:90,65:90] = MapCodes.OBSTACLE
+        #zones and obstacles init
+        self._map_only[:, 0:int(MapConst.WORLD_H/2)] = MapConst.RED_ZONE
+        self._map_only[:, int(MapConst.WORLD_H/2):MapConst.WORLD_H] = MapConst.BLUE_ZONE
+        
+        # !! hardcoded size of the map. need to change later
+        for i in range(4):
+            lx, ly = np.random.randint(0,100,[2])
+            self._map_only[lx-10:lx+10, ly-10:ly+10] = MapConst.OBSTACLE
     
-        self._map_only[np.random.randint(0,100),np.random.randint(0,int(WORLD_H/2))] = MapCodes.RED_FLAG
-        self._map_only[np.random.randint(0,100),np.random.randint(int(WORLD_H/2),WORLD_H)] = MapCodes.BLUE_FLAG
+        self._map_only[np.random.randint(0,100),np.random.randint(0,int(MapConst.WORLD_H/2))] = MapConst.RED_FLAG
+        self._map_only[np.random.randint(0,100),np.random.randint(int(MapConst.WORLD_H/2),MapConst.WORLD_H)] = MapConst.BLUE_FLAG
                         
         self._map_full = np.copy(self._map_only)
         self._map_red = np.copy(self._map_only)
         self._map_blue = np.copy(self._map_only)
         
     def get_map(self, team=None):
-        if team == Team.Blue:
+        if team == TeamConst.BLUE:
             return self._map_blue
-        elif team == Team.Red:
+        elif team == TeamConst.RED:
             return self._map_red
         else:
             return self._map_only
@@ -61,55 +64,64 @@ class GridWorld(object):
     def get_loc(self, x, y):
         return self._map_full[x,y]
     
-    def update_map(self,agents):
-        temp_map = np.copy(self._map_only)
-        for agent in agents:
-            if agent.get_team() == Team.RED:
-                temp_map[agent.get_loc()] = MapCodes.RED_AGENT
-            elif agent.get_team() == Team.BLUE: 
-                temp_map[agent.get_loc()] = MapCodes.BLUE_AGENT
-            elif agent.get_team() == Team.GRAY: 
-                temp_map[agent.get_loc()] = MapCodes.GRAY_AGENT
-        self._map_full = temp_map
-        
-        self._map_red = np.copy(self._map_only)
-        self._map_blue = np.copy(self._map_only)
+    def _update_dependent_maps(self, agents):
+        self._map_red = np.zeros([MapConst.WORLD_W,MapConst.WORLD_H])#np.copy(self._map_only)
+        self._map_blue = np.zeros([MapConst.WORLD_W,MapConst.WORLD_H])#np.copy(self._map_only)
         for agent in agents:
             l = agent.get_loc()
-            if agent.get_team() == Team.RED:
-                for xi in range(-agent.range,agent.range):
-                    for yi in range(-agent.range,agent.range):
-                        locx, locy = l[0] + xi, l[1] + yi
-                        try:
-                            self._map_red[locx, locy] = self._map_full[locx, locy]
-                        except:
-                            print("outside the map")
-            
-            
-        return temp_map
-                            
+            for xi in range(-agent.range,agent.range):
+                for yi in range(-agent.range,agent.range):
+                    locx, locy = l[0] + xi, l[1] + yi
+                    locx, locy = np.clip([locx,locy],0,99) ## ! hardcoded map size. need to change later
+                    if agent.get_team() == TeamConst.RED:
+                        self._map_red[locx, locy] = self._map_full[locx, locy]
+                    elif agent.get_team() == TeamConst.BLUE:
+                        self._map_blue[locx, locy] = self._map_full[locx, locy]
+                        
+    def update_map(self, agents):
+        temp_map = np.copy(self._map_only)
+        for agent in agents:
+            if agent.get_team() == TeamConst.RED:
+                temp_map[agent.get_loc()] = MapConst.RED_AGENT
+            elif agent.get_team() == TeamConst.BLUE: 
+                temp_map[agent.get_loc()] = MapConst.BLUE_AGENT
+            elif agent.get_team() == TeamConst.GRAY: 
+                temp_map[agent.get_loc()] = MapConst.GRAY_AGENT
+        self._map_full = temp_map
+        self._update_dependent_maps(agents)
                
-    def plot_all(self, team=None):
-        if team == Team.BLUE:
-            plt.imshow(self._map_blue)
-        elif team == Team.RED:
-            plt.imshow(self._map_red)
-        else:
-            plt.imshow(self._map_full)
+    def plot_all(self):
+        plt.subplot(1,3,1)
+        plt.title('Capture the Flag')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.imshow(self._map_full)
+        
+        plt.subplot(1,3,2)
+        plt.title('Blue Team View')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.imshow(self._map_blue)
+        
+        plt.subplot(1,3,3)
+        plt.title('Red Team View')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.imshow(self._map_red)
+            
         plt.pause(0.5)
         #plt.show()
-        plt.gcf().clear()
+        #plt.gcf().clear()
 
-
-##=== agent classes
+##=== agent class definitions
 class Agent():
     
     def __init__(self, loc, team):
         try:
             self.x, self.y = loc
             self.team = team
-            self.step = 1
-            self.range = 2
+            self.step = TeamConst.UGV_STEP
+            self.range = TeamConst.UGV_RANGE 
         except:
             print("error: cannot initialize agent")
     
@@ -128,8 +140,8 @@ class Agent():
         else:
             print("error: wrong action selected")
         
-        self.x = max(min(WORLD_W-1, x), 0)
-        self.y = max(min(WORLD_H-1, y), 0)
+        self.x = max(min(MapConst.WORLD_W-1, x), 0)
+        self.y = max(min(MapConst.WORLD_H-1, y), 0)
             
     def get_loc(self):
         return self.x, self.y
@@ -144,56 +156,51 @@ class Agent():
 class GroundVehicle(Agent):
     
     def __init__(self,loc,team):
-        Agent.__init__(self,loc,team)
+        Agent.__init__(self,loc,team)       
         
 class AerialVehicle(Agent):
         
     def __init__(self,loc,team):
         Agent.__init__(self,loc,team)
-        self.step = 3
-        self.range = 4
+        self.step = TeamConst.UAV_STEP
+        self.range = TeamConst.UAV_RANGE
         
 class GrayAgent(GroundVehicle):
     
     def __init__(self,loc,team):
-        Agent.__init__(self,loc,Team.GRAY)
-        self.direction = [0,0]
-        
+        Agent.__init__(self,loc,TeamConst.GRAY)
+        self.direction = [0,0] 
+        ## ! not used for now
     def check_complete(self):
         return self.get_loc == self.direction
     
-##=== CIMULATION STARTS HERE
+##=== SIMULATION STARTS HERE
 
 gr = GridWorld()
-blue_team = []
-red_team = []
-gray_team = []
 agents_list = []
 
-red_team_obs = []
-blue_team_obs = []
+for i in range(TeamConst.NUM_RED//2):
+    l = np.random.randint(0,100,[2])
+    agents_list.append(GroundVehicle(l, TeamConst.RED))
+    l = np.random.randint(0,100,[2])
+    agents_list.append(AerialVehicle(l, TeamConst.RED))
+for i in range(TeamConst.NUM_BLUE//2):
+    l = np.random.randint(0,100,[2])
+    agents_list.append(GroundVehicle(l, TeamConst.BLUE))
+    l = np.random.randint(0,100,[2])
+    agents_list.append(AerialVehicle(l, TeamConst.BLUE))
+for i in range(TeamConst.NUM_GRAY):
+    l = np.random.randint(0,100,[2])
+    agents_list.append(GroundVehicle(l, TeamConst.GRAY))
 
-for i in range(NUM_RED//2):
-    l = np.random.randint(0,100,[2])
-    red_team.append(GroundVehicle(l, Team.RED))
-    l = np.random.randint(0,100,[2])
-    red_team.append(AerialVehicle(l, Team.RED))
-for i in range(NUM_BLUE//2):
-    l = np.random.randint(0,100,[2])
-    red_team.append(GroundVehicle(l, Team.BLUE))
-    l = np.random.randint(0,100,[2])
-    red_team.append(AerialVehicle(l, Team.BLUE))
-for i in range(NUM_GRAY):
-    l = np.random.randint(0,100,[2])
-    gray_team.append(GroundVehicle(l, Team.GRAY))
-
-agents_list.extend(red_team)
-agents_list.extend(blue_team)
-agents_list.extend(gray_team)
 gr.update_map(agents_list)
 
-for i in range(1000):
+fig = plt.figure(0,figsize=[15,5])
+
+while(plt.fignum_exists(0)):
     for agent in agents_list:
         agent.move(np.random.randint(0,5))
         gr.update_map(agents_list)
-    gr.plot_all(Team.RED)
+    gr.plot_all()
+    
+    
