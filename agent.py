@@ -1,12 +1,17 @@
-from constants import Constants, Team, MapCodes
+#import numpy as np
+#import matplotlib.pyplot as plt
 
-##=== agent classes
+from const import TeamConst, MapConst 
+
+##=== agent class definitions
 class Agent():
     
     def __init__(self, loc, team):
         try:
             self.x, self.y = loc
             self.team = team
+            self.step = TeamConst.UGV_STEP
+            self.range = TeamConst.UGV_RANGE 
         except:
             print("error: cannot initialize agent")
     
@@ -15,18 +20,18 @@ class Agent():
         if action == 0: 
             pass
         elif action == 1: 
-            x -= 1
+            x -= self.step
         elif action == 2:
-            x += 1
+            x += self.step
         elif action == 3:
-            y -= 1
+            y -= self.step
         elif action == 4:
-            y += 1
+            y += self.step
         else:
             print("error: wrong action selected")
         
-        self.x = max(min(WORLD_W-1, x), 0)
-        self.y = max(min(WORLD_H-1, y), 0)
+        self.x = max(min(MapConst.WORLD_W-1, x), 0)
+        self.y = max(min(MapConst.WORLD_H-1, y), 0)
             
     def get_loc(self):
         return self.x, self.y
@@ -41,18 +46,22 @@ class Agent():
 class GroundVehicle(Agent):
     
     def __init__(self,loc,team):
-        Agent.__init__(self,loc,team)
+        Agent.__init__(self,loc,team)       
+        
         
 class AerialVehicle(Agent):
-    
+        
     def __init__(self,loc,team):
         Agent.__init__(self,loc,team)
+        self.step = TeamConst.UAV_STEP
+        self.range = TeamConst.UAV_RANGE
+        
         
 class GrayAgent(GroundVehicle):
     
     def __init__(self,loc,team):
-        Agent.__init__(self,loc,Team.GRAY)
-        self.direction = [0,0]
-        
+        Agent.__init__(self,loc,TeamConst.GRAY)
+        self.direction = [0,0] 
+        ## ! not used for now
     def check_complete(self):
         return self.get_loc == self.direction
