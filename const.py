@@ -1,4 +1,6 @@
-##=== Defining the refences
+# Defining the refences
+
+
 class TeamConst:
     RED = 10
     BLUE = 50
@@ -11,7 +13,8 @@ class TeamConst:
     UGV_STEP = 1
     UAV_RANGE = 4
     UGV_RANGE = 2
-    
+
+
 class MapConst:
     WORLD_H = 100
     WORLD_W = 100
@@ -24,4 +27,3 @@ class MapConst:
     GRAY_AGENT = 95
     OBSTACLE = 100
     AERIAL_DENIAL = 90
-  
