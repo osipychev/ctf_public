@@ -1,7 +1,7 @@
-# Defining the refences
 
 
 class TeamConst:
+    """ Defining the constants for agents and teams """
     RED = 10
     BLUE = 50
     GRAY = 90
@@ -16,6 +16,7 @@ class TeamConst:
 
 
 class MapConst:
+    """ Defining the constants for map and environment """
     WORLD_H = 100
     WORLD_W = 100
     RED_ZONE = 15

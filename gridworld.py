@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 from const import TeamConst, MapConst
 
 
-# Environment class definition
 class GridWorld(object):
-
+    """    Environment class definition  """
     def __init__(self):
         self._map_only = np.zeros([MapConst.WORLD_W, MapConst.WORLD_H],
                                   dtype=int)
