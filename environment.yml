@@ -2,7 +2,6 @@ name: missionplanner
 channels:
 - defaults
 dependencies:
-- ca-certificates=2017.08.26=ha1e5d58_0
 - certifi=2018.1.18=py36_0
 - libcxx=4.0.1=h579ed51_0
 - libcxxabi=4.0.1=hebd6815_0
@@ -19,5 +18,17 @@ dependencies:
 - wheel=0.30.0=py36h5eb2c71_1
 - xz=5.2.3=h0278029_2
 - zlib=1.2.11=hf3cbc9b_2
-prefix: /Users/Zach/miniconda3/envs/missionplanner
+- pip:
+  - chardet==3.0.4
+  - future==0.16.0
+  - gym==0.9.7
+  - gym-cap==0.2
+  - idna==2.6
+  - numpy==1.14.0
+  - pygame==1.9.3
+  - pyglet==1.4.0a1
+  - requests==2.18.4
+  - six==1.11.0
+  - urllib3==1.22
+prefix: ~/miniconda3/envs/missionplanner
 
