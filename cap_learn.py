@@ -8,13 +8,14 @@ observation = env.reset()
 done = False
 t = 0
 while not done:
-    env.render("human")
     # action = env.action_space.sample()  # choose random action
-    action = ["N", "X", "X", "X"]
+    action = ["S", "X", "X", "X"]
     observation, reward, done, info = env.step(action)  # feedback from environment
+    env.render("human")
     t += 1
     # if not t % 100:
         # print(t, info)
+    time.sleep(3)
     if t == 100000:
         break
 print("--- %s seconds ---" % (time.time() - start_time))
