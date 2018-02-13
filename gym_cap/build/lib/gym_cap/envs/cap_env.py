@@ -9,6 +9,8 @@ from .cap_view2d import CaptureView2D
 
 from const import TeamConst, MapConst
 
+from pandas import *
+
 TEAM1_BACKGROUND = 0
 TEAM2_BACKGROUND = 1
 TEAM1_ENTITY = 2
@@ -64,11 +66,13 @@ class CapEnv(gym.Env):
         # rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
         rel_path = "/Users/Zach/Projects/Research-SP18/missionplanner/gym_cap/gym_cap/envs/ctf_samples/cap2d_000.npy"
         self._env = np.load(rel_path)
+        self._env = self._env.transpose()
 
     #TODO
     def create_reward(self):
         pass
 
+    #TODO obstacles
     def create_action_space(self, team):
         """
         Creates the action space in self.action_space
@@ -123,63 +127,66 @@ class CapEnv(gym.Env):
             for xi in range(-agent.range, agent.range+1):
                 for yi in range(-agent.range, agent.range+1):
                     locx, locy = loc[0] + xi, loc[1] + yi
-                    if not (locx < 0 or locx >= self.map_size[0]) and \
-                            not (locy < 0 or locy >= self.map_size[1]):
-                        self.observation_space[locx][locy] = self._env[locx][locy]
+                    if not (locx < 0 or locx > self.map_size[0]-1) and \
+                            not (locy < 0 or locy > self.map_size[1]-1):
+                        self.observation_space[locy][locx] = self._env[locy][locx]
 
+    #BUG update entity location after move
     def move_entity(self, action, unit, team):
         if team == 1:
             locx, locy = self.team1[unit].get_loc()
+            self.team1[unit].move(action)
             if action == "N":
                 if self.team1[unit].atHome:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                self._env[locx][locy-1] = TEAM1_ENTITY
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                self._env[locy-1][locx] = TEAM1_ENTITY
             elif action == "S":
                 if self.team1[unit].atHome:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                self._env[locx][locy+1] = TEAM1_ENTITY
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                self._env[locy+1][locx] = TEAM1_ENTITY
             elif action == "E":
                 if self.team1[unit].atHome:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                self._env[locx-1][locy] = TEAM1_ENTITY
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                self._env[locy][locx-1] = TEAM1_ENTITY
             elif action == "W":
                 if self.team1[unit].atHome:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                self._env[locx+1][locy] = TEAM1_ENTITY
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                self._env[locy][locx+1] = TEAM1_ENTITY
         elif team == 2:
+            self.team2[unit].move(action)
             locx, locy = self.team2[unit].get_loc()
             if action == "N":
                 if self.team2[unit].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-                self._env[locx][locy-1] = TEAM2_ENTITY
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+                self._env[locy-1][locx] = TEAM2_ENTITY
             elif action == "S":
                 if self.team2[unit].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-                self._env[locx][locy+1] = TEAM2_ENTITY
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+                self._env[locy+1][locx] = TEAM2_ENTITY
             elif action == "E":
                 if self.team2[unit].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-                self._env[locx-1][locy] = TEAM2_ENTITY
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+                self._env[locy][locx-1] = TEAM2_ENTITY
             elif action == "W":
                 if self.team2[unit].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_BACKGROUND
                 else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-                self._env[locx+1][locy] = TEAM2_ENTITY
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+                self._env[locy][locx+1] = TEAM2_ENTITY
         else:
             raise("Team number must be 1 or 2.")
 
@@ -215,9 +222,13 @@ class CapEnv(gym.Env):
         if isinstance(entities_action[0], int):
             for i in range(len(entities_action)):
                 self.move_entity(self.ACTION[entities_action[i]], i, 1)
+                print(self.team1[i].report_loc())
         else:
             for i in range(len(entities_action)):
                 self.move_entity(entities_action[i], i, 1)
+                print(self.team1[i].report_loc())
+
+        print(DataFrame(self._env.tolist()))
 
         #TODO
         #Get team2 actions from heuristic function
@@ -280,7 +291,7 @@ class CapEnv(gym.Env):
     def _render(self, mode="human", close=False):
         if close:
             self.cap_view.quit_game()
-        self.cap_view.update_env(self._env)
+        self.cap_view.update_env(self.observation_space)
         return
 
 class Agent():
@@ -294,15 +305,15 @@ class Agent():
 
     def move(self, action):
         x, y = self.x, self.y
-        if action == 0:
+        if action == "X":
             pass
-        elif action == 1:
+        elif action == "W":
             x -= self.step
-        elif action == 2:
+        elif action == "E":
             x += self.step
-        elif action == 3:
+        elif action == "N":
             y -= self.step
-        elif action == 4:
+        elif action == "S":
             y += self.step
         else:
             print("error: wrong action selected")
