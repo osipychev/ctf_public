@@ -15,7 +15,14 @@ TEAM1_BACKGROUND = 0
 TEAM2_BACKGROUND = 1
 TEAM1_ENTITY = 2
 TEAM2_ENTITY = 3
+TEAM1_FLAG = 4
+TEAM2_FLAG = 5
+OBSTACLE = 6
 
+
+"""
+Requires that all units initially exist in home zone.
+"""
 class CapEnv(gym.Env):
     metadata = {
         "render.modes": ["fast", "human"],
@@ -25,33 +32,30 @@ class CapEnv(gym.Env):
 
     def __init__(self, env_matrix_file=None, mode=None):
 
-        #TODO check if exists
-        # if mode=="":
-            # self.cap_view = CaptureView2D(game_name="Capture The Flag Gym - (%s)" % \
-                                          # env_matrix_file, environment_path=env_matrix_file)
-        # else:
-            # self.cap_view = CaptureView2D()
-
         self.matrix_file = env_matrix_file
         self.create_env(env_matrix_file)
         self.map_size = (len(self._env[0]), len(self._env))
+        self.team_home = self._env
 
         self.team1 = []
         self.team2 = []
         for row in range(len(self._env)):
             for col in range(len(self._env[0])):
-                if self._env[row][col] == 2:
+                if self._env[row][col] == TEAM1_ENTITY:
                     cur_ent = GroundVehicle((col, row))
                     self.team1.append(cur_ent)
-                elif col == 3:
+                    self.team_home[row][col] = TEAM1_BACKGROUND
+                elif self._env[row][col] == TEAM2_ENTITY:
+                    print(col, row)
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
+                    self.team_home[row][col] = TEAM2_BACKGROUND
 
-        #TODO broken ACTION scope
-        # self.action_space1 = [ACTION for i in range(len(self.team1))]
-        # self.action_space2 = [ACTION for i in range(len(self.team2))]
-        self.action_space = [["N", "E", "S", "W", "X"] for i in range(len(self.team1))]
-        self.action_space2 = [["N", "E", "S", "W", "X"] for i in range(len(self.team2))]
+        # for i in range(len(self.team2)):
+            # self.team2[i].report_loc()
+
+        self.action_space = spaces.Box(0, len(self.ACTION)-1,\
+                                       shape=(len(self.team1),), dtype=int)
 
         self.create_observation_space()
         self.state = self.observation_space
@@ -64,7 +68,7 @@ class CapEnv(gym.Env):
     def create_env(self, matrix_file):
         # dir_path = os.path.dirname(os.path.abspath(__file__))
         # rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
-        rel_path = "/Users/Zach/Projects/Research-SP18/missionplanner/gym_cap/gym_cap/envs/ctf_samples/cap2d_000.npy"
+        rel_path = "/Users/Zach/Projects/missionplanner/gym_cap/gym_cap/envs/ctf_samples/cap2d_000.npy"
         self._env = np.load(rel_path)
         self._env = self._env.transpose()
 
@@ -73,44 +77,6 @@ class CapEnv(gym.Env):
         pass
 
     #TODO obstacles
-    def create_action_space(self, team):
-        """
-        Creates the action space in self.action_space
-
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        """
-        if team == 1:
-            self.action_space = ["X" for i in range(len(team1))]
-            for i in range(len(team1)):
-                if team1[i].isAlive:
-                    self.action_space[i] = ACTION
-                    locx, locy = team1[i].get_loc()
-                    if locx == 0:
-                        self.action_space.remove("W")
-                    elif locx == self.map_size[0]-1:
-                        self.action_space.remove("E")
-                    if locy == 0:
-                        self.action_space.remove("N")
-                    elif locy == self.map_size[1]-1:
-                        self.action_space.remove("S")
-        elif team == 2:
-            self.action_space2 = ["X" for i in range(len(team2))]
-            for i in range(len(team2)):
-                if team2[i].isAlive:
-                    self.action_space2[i] = ACTION
-                    locx, locy = team2[i].get_loc()
-                    if locx == 0:
-                        self.action_space2.remove("W")
-                    elif locx == self.map_size[0]-1:
-                        self.action_space2.remove("E")
-                    if locy == 0:
-                        self.action_space2.remove("N")
-                    elif locy == self.map_size[1]-1:
-                        self.action_space2.remove("S")
-
     def create_observation_space(self):
         """
         Creates the observation space in self.observation_space
@@ -131,62 +97,129 @@ class CapEnv(gym.Env):
                             not (locy < 0 or locy > self.map_size[1]-1):
                         self.observation_space[locy][locx] = self._env[locy][locx]
 
-    #BUG update entity location after move
     def move_entity(self, action, unit, team):
         if team == 1:
             locx, locy = self.team1[unit].get_loc()
-            self.team1[unit].move(action)
+            unit_step = self.team1[unit].step
             if action == "N":
-                if self.team1[unit].atHome:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                self._env[locy-1][locx] = TEAM1_ENTITY
+                if locy-unit_step >= 0 \
+                        and self._env[locy-unit_step][locx]!=OBSTACLE \
+                        and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM1_FLAG:
+                    self.team1[unit].move(action)
+                    if self.team1[unit].atHome:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    locx, locy = self.team1[unit].get_loc()
+                    self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_ENTITY
             elif action == "S":
-                if self.team1[unit].atHome:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                self._env[locy+1][locx] = TEAM1_ENTITY
+                if locy+unit_step < self.map_size[1] \
+                        and self._env[locy+unit_step][locx]!=OBSTACLE \
+                        and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM1_FLAG:
+                    self.team1[unit].move(action)
+                    if self.team1[unit].atHome:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    locx, locy = self.team1[unit].get_loc()
+                    self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_ENTITY
             elif action == "E":
-                if self.team1[unit].atHome:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                self._env[locy][locx-1] = TEAM1_ENTITY
+                if locx+unit_step < self.map_size[0] \
+                        and self._env[locy][locx+unit_step]!=OBSTACLE \
+                        and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM1_FLAG:
+                    self.team1[unit].move(action)
+                    if self.team1[unit].atHome:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    locx, locy = self.team1[unit].get_loc()
+                    self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_ENTITY
             elif action == "W":
-                if self.team1[unit].atHome:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                self._env[locy][locx+1] = TEAM1_ENTITY
+                if locx-unit_step >= 0 \
+                        and self._env[locy][locx-unit_step]!=OBSTACLE \
+                        and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM1_FLAG:
+                    self.team1[unit].move(action)
+                    if self.team1[unit].atHome:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    locx, locy = self.team1[unit].get_loc()
+                    self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
+                    self._env[locy][locx] = TEAM1_ENTITY
         elif team == 2:
-            self.team2[unit].move(action)
             locx, locy = self.team2[unit].get_loc()
+            unit_step = self.team2[unit].step
             if action == "N":
-                if self.team2[unit].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                self._env[locy-1][locx] = TEAM2_ENTITY
+                if locy-unit_step >= 0 \
+                        and self._env[locy-unit_step][locx]!=OBSTACLE \
+                        and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
+                    print("Moving North")
+                    self.team2[unit].move(action)
+                    if self.team2[unit].atHome:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    locx, locy = self.team2[unit].get_loc()
+                    self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_ENTITY
             elif action == "S":
-                if self.team2[unit].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                self._env[locy+1][locx] = TEAM2_ENTITY
+                if locy+unit_step < self.map_size[1] \
+                        and self._env[locy+unit_step][locx]!=OBSTACLE \
+                        and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
+                    print("Moving North")
+                    self.team2[unit].move(action)
+                    if self.team2[unit].atHome:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    locx, locy = self.team2[unit].get_loc()
+                    self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_ENTITY
             elif action == "E":
-                if self.team2[unit].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                self._env[locy][locx-1] = TEAM2_ENTITY
+                if locx+unit_step < self.map_size[0] \
+                        and self._env[locy][locx+unit_step]!=OBSTACLE \
+                        and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
+                    print("Moving North")
+                    self.team2[unit].move(action)
+                    if self.team2[unit].atHome:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    locx, locy = self.team2[unit].get_loc()
+                    self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_ENTITY
             elif action == "W":
-                if self.team2[unit].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
-                else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
-                self._env[locy][locx+1] = TEAM2_ENTITY
+                if locx-unit_step >= 0 \
+                        and self._env[locy][locx-unit_step]!=OBSTACLE \
+                        and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
+                    print("Moving North")
+                    self.team2[unit].move(action)
+                    if self.team2[unit].atHome:
+                        self._env[locy][locx] = TEAM2_BACKGROUND
+                    else:
+                        self._env[locy][locx] = TEAM1_BACKGROUND
+                    locx, locy = self.team2[unit].get_loc()
+                    self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
+                    self._env[locy][locx] = TEAM2_ENTITY
         else:
             raise("Team number must be 1 or 2.")
 
@@ -219,24 +252,24 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        if isinstance(entities_action[0], int):
-            for i in range(len(entities_action)):
-                self.move_entity(self.ACTION[entities_action[i]], i, 1)
-                print(self.team1[i].report_loc())
-        else:
-            for i in range(len(entities_action)):
-                self.move_entity(entities_action[i], i, 1)
-                print(self.team1[i].report_loc())
+        for i in range(len(self.team2)):
+            self.team2[i].report_loc()
+        for i in range(len(entities_action)):
+            # self.team1[i].report_loc()
+            self.move_entity(self.ACTION[entities_action[i]], i, 1)
 
-        print(DataFrame(self._env.tolist()))
+        #DEBUGGING
+        # print(DataFrame(self._env.tolist()))
 
         #TODO
         #Get team2 actions from heuristic function
         # team2_actions = generate_actions()
-        team2_actions = ["X"]*len(self.team2)
+        team2_actions = self.action_space.sample()
+        print(team2_actions)
 
         #Move team2
         for i in range(len(team2_actions)):
+            self.team2[i].report_loc()
             self.move_entity(team2_actions[i], i, 2)
 
         #TODO Reward statement
@@ -291,7 +324,7 @@ class CapEnv(gym.Env):
     def _render(self, mode="human", close=False):
         if close:
             self.cap_view.quit_game()
-        self.cap_view.update_env(self.observation_space)
+        self.cap_view.update_env(self._env)
         return
 
 class Agent():
