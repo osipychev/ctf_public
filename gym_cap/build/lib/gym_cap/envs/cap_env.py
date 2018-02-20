@@ -18,6 +18,7 @@ TEAM2_ENTITY = 3
 TEAM1_FLAG = 4
 TEAM2_FLAG = 5
 OBSTACLE = 6
+DEAD = 7
 
 
 """
@@ -46,13 +47,9 @@ class CapEnv(gym.Env):
                     self.team1.append(cur_ent)
                     self.team_home[row][col] = TEAM1_BACKGROUND
                 elif self._env[row][col] == TEAM2_ENTITY:
-                    print(col, row)
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
-
-        # for i in range(len(self.team2)):
-            # self.team2[i].report_loc()
 
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
@@ -99,6 +96,8 @@ class CapEnv(gym.Env):
 
     def move_entity(self, action, unit, team):
         if team == 1:
+            if not self.team1[unit].isAlive:
+                return
             locx, locy = self.team1[unit].get_loc()
             unit_step = self.team1[unit].step
             if action == "N":
@@ -158,6 +157,8 @@ class CapEnv(gym.Env):
                     self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
                     self._env[locy][locx] = TEAM1_ENTITY
         elif team == 2:
+            if not self.team2[unit].isAlive:
+                return
             locx, locy = self.team2[unit].get_loc()
             unit_step = self.team2[unit].step
             if action == "N":
@@ -166,7 +167,6 @@ class CapEnv(gym.Env):
                         and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
-                    print("Moving North")
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -181,7 +181,6 @@ class CapEnv(gym.Env):
                         and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
-                    print("Moving North")
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -196,7 +195,6 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
-                    print("Moving North")
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -211,7 +209,6 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
-                    print("Moving North")
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -222,6 +219,47 @@ class CapEnv(gym.Env):
                     self._env[locy][locx] = TEAM2_ENTITY
         else:
             raise("Team number must be 1 or 2.")
+
+    #TODO improve
+    #Change from range to attack range
+    def check_dead(self, entity_num, team):
+        if team == 1:
+            locx, locy = self.team1[entity_num].get_loc()
+            cur_range = self.team1[entity_num].range
+            for x in range(-cur_range, cur_range+1):
+                for y in range(-cur_range, cur_range+1):
+                    if x+locx >= self.map_size[0] or x+locx < 0:
+                        break
+                    if y+locy >= self.map_size[1] or y+locy < 0:
+                        continue
+                    if self._env[locy+y][locx+x] == TEAM2_ENTITY:
+                        if self.team_home[locx+x][locy+y] == TEAM1_BACKGROUND:
+                            for i in range(len(self.team2)):
+                                enemy_locx, enemy_locy = self.team2[i].get_loc()
+                                if enemy_locx == locx+x and enemy_locy == locy+y:
+                                    self.team2[i].isAlive = False
+                                    self._env[locx+x][locy+y] = DEAD
+                                    break
+        elif team == 2:
+            locx, locy = self.team2[entity_num].get_loc()
+            cur_range = self.team2[entity_num].range
+            for x in range(-cur_range, cur_range+1):
+                for y in range(-cur_range, cur_range+1):
+                    if x+locx >= self.map_size[0] or x+locx < 0:
+                        break
+                    if y+locy >= self.map_size[1] or y+locy < 0:
+                        continue
+                    if self._env[locy+y][locx+x] == TEAM1_ENTITY:
+                        print("ENEMY TARGET ACQUIRED")
+                        if self.team_home[locy+y][locx+x] == TEAM2_BACKGROUND:
+                            for i in range(len(self.team1)):
+                                enemy_locx, enemy_locy = self.team1[i].get_loc()
+                                if enemy_locx == locx+x and enemy_locy == locy+y:
+                                    self.team1[i].isAlive = False
+                                    self._env[locy+y][locx+x] = DEAD
+                                    print("ENEMY KIA")
+                                    break
+
 
     #TODO necessary?
     def _seed(self, seed=None):
@@ -252,25 +290,30 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        for i in range(len(self.team2)):
-            self.team2[i].report_loc()
-        for i in range(len(entities_action)):
-            # self.team1[i].report_loc()
-            self.move_entity(self.ACTION[entities_action[i]], i, 1)
-
         #DEBUGGING
-        # print(DataFrame(self._env.tolist()))
+        # print(DataFrame(self.team_home))
+        for i in range(len(entities_action)):
+            self.move_entity(self.ACTION[entities_action[i]], i, 1)
 
         #TODO
         #Get team2 actions from heuristic function
         # team2_actions = generate_actions()
         team2_actions = self.action_space.sample()
-        print(team2_actions)
 
         #Move team2
         for i in range(len(team2_actions)):
-            self.team2[i].report_loc()
-            self.move_entity(team2_actions[i], i, 2)
+            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
+
+        #Check for dead
+        for i in range(len(self.team1)):
+            if not self.team1[i].atHome:
+                continue
+            self.check_dead(i, 1)
+
+        for i in range(len(self.team2)):
+            if not self.team2[i].atHome:
+                continue
+            self.check_dead(i, 2)
 
         #TODO Reward statement
         # reward = create_reward()
@@ -305,10 +348,10 @@ class CapEnv(gym.Env):
         self.team2 = []
         for row in range(len(self._env)):
             for col in range(len(self._env[0])):
-                if self._env[row][col] == 2:
+                if self._env[row][col] == TEAM1_ENTITY:
                     cur_ent = GroundVehicle((col, row))
                     self.team1.append(cur_ent)
-                elif col == 3:
+                elif self._env[row][col] == TEAM2_ENTITY:
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
 
