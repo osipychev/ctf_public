@@ -1,0 +1,4 @@
+1. Pick up flags
+2. Remove absolue paths
+3. Training environment (no enemy)
+4. Larger environment
