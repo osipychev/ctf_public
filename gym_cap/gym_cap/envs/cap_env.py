@@ -84,9 +84,9 @@ class CapEnv(gym.Env):
         matrix_file    : string
             Environment file
         """
-        # dir_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = os.path.abspath(os.path.dirname(__file__))
         # rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
-        rel_path = "/Users/Zach/Projects/missionplanner/gym_cap/gym_cap/envs/ctf_samples/cap2d_000.npy"
+        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
         self._env = np.load(rel_path)
         self._env = self._env.transpose()
 
