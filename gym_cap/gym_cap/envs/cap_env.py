@@ -31,7 +31,17 @@ class CapEnv(gym.Env):
 
     ACTION = ["N", "E", "S", "W", "X"]
 
-    def __init__(self, env_matrix_file=None, mode=None):
+    def __init__(self, env_matrix_file=None):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        env_matrix_file    : string
+            Environment file. If none, size is expected
+        """
 
         self.matrix_file = env_matrix_file
         self.create_env(env_matrix_file)
@@ -57,12 +67,24 @@ class CapEnv(gym.Env):
         self.create_observation_space()
         self.state = self.observation_space
         self.cap_view = CaptureView2D()
+        self.game_lost = False
+        self.game_won = False
 
         #TODO necessary?
         self._seed()
 
     #TODO
     def create_env(self, matrix_file):
+        """
+        Loads numpy file
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        matrix_file    : string
+            Environment file
+        """
         # dir_path = os.path.dirname(os.path.abspath(__file__))
         # rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
         rel_path = "/Users/Zach/Projects/missionplanner/gym_cap/gym_cap/envs/ctf_samples/cap2d_000.npy"
@@ -71,9 +93,16 @@ class CapEnv(gym.Env):
 
     #TODO
     def create_reward(self):
+        """
+        temp. Not complete
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        """
         pass
 
-    #TODO obstacles
     def create_observation_space(self):
         """
         Creates the observation space in self.observation_space
@@ -86,6 +115,8 @@ class CapEnv(gym.Env):
         #Always returns team1
         self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
         for agent in self.team1:
+            if not agent.isAlive:
+                continue
             loc = agent.get_loc()
             for xi in range(-agent.range, agent.range+1):
                 for yi in range(-agent.range, agent.range+1):
@@ -95,6 +126,21 @@ class CapEnv(gym.Env):
                         self.observation_space[locy][locx] = self._env[locy][locx]
 
     def move_entity(self, action, unit, team):
+        """
+        Moves each unit individually. Checks if action is valid first.
+        Also checks if game is over (enemy unit touches flag)
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        action  : string
+            Action the unit is to take
+        unit    : int
+            Represents where in the unit list is the unit to move
+        team    : int
+            Represents which team the unit belongs to
+        """
         if team == 1:
             if not self.team1[unit].isAlive:
                 return
@@ -106,6 +152,8 @@ class CapEnv(gym.Env):
                         and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM1_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM2_FLAG:
+                        self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
                         self._env[locy][locx] = TEAM1_BACKGROUND
@@ -120,6 +168,8 @@ class CapEnv(gym.Env):
                         and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM1_FLAG:
+                    if self._env[locy+unit_step][locx]==TEAM2_FLAG:
+                        self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
                         self._env[locy][locx] = TEAM1_BACKGROUND
@@ -134,6 +184,8 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM1_FLAG:
+                    if self._env[locy][locx+unit_step]==TEAM2_FLAG:
+                        self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
                         self._env[locy][locx] = TEAM1_BACKGROUND
@@ -148,6 +200,8 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM1_FLAG:
+                    if self._env[locy][locx-unit_step]==TEAM2_FLAG:
+                        self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
                         self._env[locy][locx] = TEAM1_BACKGROUND
@@ -167,6 +221,8 @@ class CapEnv(gym.Env):
                         and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM1_FLAG:
+                        self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -181,6 +237,8 @@ class CapEnv(gym.Env):
                         and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
                         and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
+                    if self._env[locy+unit_step][locx]==TEAM1_FLAG:
+                        self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -195,6 +253,8 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
+                    if self._env[locy][locx+unit_step]==TEAM1_FLAG:
+                        self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -209,6 +269,8 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
                         and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
+                    if self._env[locy][locx-unit_step]==TEAM1_FLAG:
+                        self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
                         self._env[locy][locx] = TEAM2_BACKGROUND
@@ -223,6 +285,18 @@ class CapEnv(gym.Env):
     #TODO improve
     #Change from range to attack range
     def check_dead(self, entity_num, team):
+        """
+        Checks if a unit is dead
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        entity_num  : int
+            Represents where in the unit list is the unit to move
+        team    : int
+            Represents which team the unit belongs to
+        """
         if team == 1:
             locx, locy = self.team1[entity_num].get_loc()
             cur_range = self.team1[entity_num].range
@@ -238,7 +312,7 @@ class CapEnv(gym.Env):
                                 enemy_locx, enemy_locy = self.team2[i].get_loc()
                                 if enemy_locx == locx+x and enemy_locy == locy+y:
                                     self.team2[i].isAlive = False
-                                    self._env[locx+x][locy+y] = DEAD
+                                    self._env[locy+y][locx+x] = DEAD
                                     break
         elif team == 2:
             locx, locy = self.team2[entity_num].get_loc()
@@ -263,6 +337,14 @@ class CapEnv(gym.Env):
 
     #TODO necessary?
     def _seed(self, seed=None):
+        """
+        todo docs still
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        """
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
@@ -276,8 +358,6 @@ class CapEnv(gym.Env):
             CapEnv object
         entities_action  : list
             contains actions for entity 1-n
-        team  : int
-            which team number is making an action
 
         Returns
         -------
@@ -290,8 +370,9 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
+        mode="random"
         #DEBUGGING
-        # print(DataFrame(self.team_home))
+        # print(DataFrame(self._env))
         for i in range(len(entities_action)):
             self.move_entity(self.ACTION[entities_action[i]], i, 1)
 
@@ -301,6 +382,16 @@ class CapEnv(gym.Env):
         team2_actions = self.action_space.sample()
 
         #Move team2
+        if mode=="run_away":
+            team2_actions = generate_run_actions()
+        elif mode=="random":
+            team2_actions = self.action_space.sample()
+        elif mode=="defend":
+            team2_actions = self.action_space.sample()
+        elif mode=="attack":
+            team2_actions = self.action_space.sample()
+        elif mode=="sandbox":
+            self.team2=[]
         for i in range(len(team2_actions)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
 
@@ -324,7 +415,14 @@ class CapEnv(gym.Env):
 
         #TODO game over
         isDone = False
+        if self.game_won or self.game_lost:
+            isDone = True
         info = {}
+        if self.game_won:
+            print("YOU'RE A WINNER!")
+        if self.game_lost:
+            print("YOU'RE A LOSER!")
+
 
         return self.state, reward, isDone, info
 
@@ -360,14 +458,23 @@ class CapEnv(gym.Env):
 
         return self.state
 
-    #TODO
-    def is_game_over(self):
-        pass
+    def _render(self, mode="obs", close=False):
+        """
+        Renders the screen options="obs, env"
 
-    def _render(self, mode="human", close=False):
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        mode    : string
+            Defines what will be rendered
+        """
         if close:
             self.cap_view.quit_game()
-        self.cap_view.update_env(self._env)
+        if mode=="env":
+            self.cap_view.update_env(self._env)
+        elif mode=="obs":
+            self.cap_view.update_env(self.observation_space)
         return
 
 class Agent():
@@ -378,6 +485,7 @@ class Agent():
         self.x, self.y = loc
         self.step = TeamConst.UGV_STEP
         self.range = TeamConst.UGV_RANGE
+        self.a_range = TeamConst.UGV_A_RANGE
 
     def move(self, action):
         x, y = self.x, self.y
@@ -403,12 +511,11 @@ class Agent():
     def report_loc(self):
         print("report: position x:%d, y:%d" % (self.x, self.y))
 
-
 class GroundVehicle(Agent):
 
     def __init__(self, loc):
-        Agent.__init__(self, loc)
 
+        Agent.__init__(self, loc)
 
 class AerialVehicle(Agent):
 
@@ -416,7 +523,7 @@ class AerialVehicle(Agent):
         Agent.__init__(self, loc)
         self.step = TeamConst.UAV_STEP
         self.range = TeamConst.UAV_RANGE
-
+        self.a_range = TeamConst.UAV_A_RANGE
 
 class GrayAgent(GroundVehicle):
 
@@ -430,10 +537,16 @@ class GrayAgent(GroundVehicle):
 
 #Different environment sizes
 class CapEnvSample20x20(CapEnv):
-
     def __init__(self):
         super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
 
+# class CapEnvSample100x100(CapEnv):
+    # def __init__(self):
+        # super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
+
+# class CapEnvRandom(CapEnv):
+    # def __init__(self):
+        # super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
 #DEBUGGING
 # if __name__ == "__main__":
     # cap_env = CapEnv(env_matrix_file="ctf_samples/cap2d_000.npy")
