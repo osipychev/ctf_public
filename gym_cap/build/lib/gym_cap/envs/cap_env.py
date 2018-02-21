@@ -6,8 +6,7 @@ import os
 from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
-
-from const import TeamConst, MapConst
+from .const import TeamConst, MapConst
 
 from pandas import *
 
@@ -299,7 +298,7 @@ class CapEnv(gym.Env):
         """
         if team == 1:
             locx, locy = self.team1[entity_num].get_loc()
-            cur_range = self.team1[entity_num].range
+            cur_range = self.team1[entity_num].a_range
             for x in range(-cur_range, cur_range+1):
                 for y in range(-cur_range, cur_range+1):
                     if x+locx >= self.map_size[0] or x+locx < 0:
@@ -316,7 +315,7 @@ class CapEnv(gym.Env):
                                     break
         elif team == 2:
             locx, locy = self.team2[entity_num].get_loc()
-            cur_range = self.team2[entity_num].range
+            cur_range = self.team2[entity_num].a_range
             for x in range(-cur_range, cur_range+1):
                 for y in range(-cur_range, cur_range+1):
                     if x+locx >= self.map_size[0] or x+locx < 0:
@@ -324,14 +323,12 @@ class CapEnv(gym.Env):
                     if y+locy >= self.map_size[1] or y+locy < 0:
                         continue
                     if self._env[locy+y][locx+x] == TEAM1_ENTITY:
-                        print("ENEMY TARGET ACQUIRED")
                         if self.team_home[locy+y][locx+x] == TEAM2_BACKGROUND:
                             for i in range(len(self.team1)):
                                 enemy_locx, enemy_locy = self.team1[i].get_loc()
                                 if enemy_locx == locx+x and enemy_locy == locy+y:
                                     self.team1[i].isAlive = False
                                     self._env[locy+y][locx+x] = DEAD
-                                    print("ENEMY KIA")
                                     break
 
 

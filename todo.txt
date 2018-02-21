@@ -1,8 +1,8 @@
 Zach
-1. Pick up flags (tie goes to the agent)
-2. Viewing mode
-5. Dead unit observation space
-6. Attack Range
+X. Pick up flags (tie goes to the agent)
+X. Viewing mode
+X. Dead unit observation space
+X. Attack Range
 
 11. XY coordinates
 
