@@ -13,6 +13,8 @@ class TeamConst:
     UGV_STEP = 1
     UAV_RANGE = 4
     UGV_RANGE = 2
+    UGV_A_RANGE = 2
+    UAV_A_RANGE = 0
 
 
 class MapConst:

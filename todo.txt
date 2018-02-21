@@ -1,4 +1,18 @@
-1. Pick up flags
-2. Remove absolue paths
-3. Training environment (no enemy)
-4. Larger environment
+Zach
+1. Pick up flags (tie goes to the agent)
+2. Viewing mode
+5. Dead unit observation space
+6. Attack Range
+
+11. XY coordinates
+
+Karman
+7. Remove absolue paths
+4. Pygame White screen
+5. Video
+9. Training environment (no enemy)
+10. Larger environment
+
+3. Search Mode
+8. Reward
+9. Agents
