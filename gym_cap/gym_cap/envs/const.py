@@ -28,5 +28,14 @@ class MapConst:
     BLUE_AGENT = 60
     BLUE_FLAG = 50
     GRAY_AGENT = 95
-    OBSTACLE = 100
+    #OBSTACLE = 100
     AERIAL_DENIAL = 90
+    
+    TEAM1_BACKGROUND = 0
+    TEAM2_BACKGROUND = 1
+    TEAM1_ENTITY = 2
+    TEAM2_ENTITY = 3
+    TEAM1_FLAG = 4
+    TEAM2_FLAG = 5
+    OBSTACLE = 6
+    DEAD = 7
