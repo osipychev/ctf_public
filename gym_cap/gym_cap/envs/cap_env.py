@@ -502,8 +502,8 @@ class Agent():
         else:
             print("error: wrong action selected")
 
-        self.x = max(min(MapConst.WORLD_W-1, x), 0)
-        self.y = max(min(MapConst.WORLD_H-1, y), 0)
+        self.x = x#max(min(MapConst.WORLD_W-1, x), 0)
+        self.y = y#max(min(MapConst.WORLD_H-1, y), 0)
 
     def get_loc(self):
         return self.x, self.y
