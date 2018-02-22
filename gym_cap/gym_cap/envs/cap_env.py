@@ -7,6 +7,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
 from .const import TeamConst, MapConst
+from .create_map import CreateMap
 
 from pandas import *
 
@@ -84,10 +85,12 @@ class CapEnv(gym.Env):
         matrix_file    : string
             Environment file
         """
-        dir_path = os.path.abspath(os.path.dirname(__file__))
-        # rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
-        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
-        self._env = np.load(rel_path)
+#        dir_path = os.path.abspath(os.path.dirname(__file__))
+#        rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
+#        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
+#        self._env = np.load(rel_path)
+#        self._env = self._env.transpose()
+        self._env = CreateMap.gen_map('map',100,5,4)
         self._env = self._env.transpose()
 
     #TODO
