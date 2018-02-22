@@ -3,7 +3,7 @@ from .const import TeamConst, MapConst
 
 class CreateMap:
     """This class generates a random map
-    given number of cells, number of obstacles,
+    given dimension size, number of obstacles,
     and number of agents for each team"""
     
     def gen_map(name, dim=20, n_obst=4, n_agents=4):
@@ -15,7 +15,7 @@ class CreateMap:
         
         for i in range(n_obst):
             lx, ly = np.random.randint(0, dim, [2])
-            sx, sy = np.random.randint(0, dim//10, [2])
+            sx, sy = np.random.randint(0, dim//5, [2]) + 1
             new_map[lx-sx:lx+sx, ly-sy:ly+sy] = MapConst.OBSTACLE
             
         # define location of flags
