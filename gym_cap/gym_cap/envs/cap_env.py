@@ -46,7 +46,7 @@ class CapEnv(gym.Env):
         self.matrix_file = env_matrix_file
         self.create_env(env_matrix_file)
         self.map_size = (len(self._env[0]), len(self._env))
-        self.team_home = self._env
+        self.team_home = self._env.copy()
 
         self.team1 = []
         self.team2 = []
@@ -92,7 +92,7 @@ class CapEnv(gym.Env):
 #        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
 #        self._env = np.load(rel_path)
 #        self._env = self._env.transpose()
-        self._env = CreateMap.gen_map('map',100,5,4)
+        self._env = CreateMap.gen_map('map',50,5,4)
         self._env = self._env.transpose()
 
     #TODO
@@ -311,7 +311,7 @@ class CapEnv(gym.Env):
                     if y+locy >= self.map_size[1] or y+locy < 0:
                         continue
                     if self._env[locy+y][locx+x] == TEAM2_ENTITY:
-                        if self.team_home[locx+x][locy+y] == TEAM1_BACKGROUND:
+                        if self.team_home[locy+y][locx+x] == TEAM1_BACKGROUND:
                             for i in range(len(self.team2)):
                                 enemy_locx, enemy_locy = self.team2[i].get_loc()
                                 if enemy_locx == locx+x and enemy_locy == locy+y:
@@ -372,17 +372,6 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        print()
-        print("team1")
-        for i in range(len(self.team1)):
-            locx, locy = self.team1[i].get_loc()
-            print(self.team1[i].atHome)
-            print(locx, locy, self.team_home[locy][locx])
-        print("team2")
-        for i in range(len(self.team2)):
-            locx, locy = self.team2[i].get_loc()
-            print(self.team2[i].atHome)
-            print(locx, locy, self.team_home[locy][locx])
         mode="random"
         #DEBUGGING
         # print(DataFrame(self._env))
@@ -454,7 +443,7 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self.create_env(self.matrix_file)
-        self.team_home = self._env
+        self.team_home = self._env.copy()
 
         self.team1 = []
         self.team2 = []
@@ -468,9 +457,15 @@ class CapEnv(gym.Env):
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
+        # print("Reset")
+        # print(DataFrame(self.team_home))
+        # print(DataFrame(self._env))
 
         self.create_observation_space()
         self.state = self.observation_space
+
+        self.game_lost = False
+        self.game_won = False
 
         return self.state
 
