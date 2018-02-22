@@ -7,7 +7,7 @@ X. Attack Range
 11. XY coordinates
 
 Karman
-7. Remove absolue paths
+X. Remove absolue paths
 4. Pygame White screen
 5. Video
 9. Training environment (no enemy)

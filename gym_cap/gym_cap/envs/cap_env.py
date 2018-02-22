@@ -61,6 +61,8 @@ class CapEnv(gym.Env):
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
 
+        # print(DataFrame(self.team_home))
+        # print(DataFrame(self._env))
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
@@ -370,6 +372,17 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
+        print()
+        print("team1")
+        for i in range(len(self.team1)):
+            locx, locy = self.team1[i].get_loc()
+            print(self.team1[i].atHome)
+            print(locx, locy, self.team_home[locy][locx])
+        print("team2")
+        for i in range(len(self.team2)):
+            locx, locy = self.team2[i].get_loc()
+            print(self.team2[i].atHome)
+            print(locx, locy, self.team_home[locy][locx])
         mode="random"
         #DEBUGGING
         # print(DataFrame(self._env))
@@ -441,6 +454,7 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self.create_env(self.matrix_file)
+        self.team_home = self._env
 
         self.team1 = []
         self.team2 = []
@@ -449,9 +463,11 @@ class CapEnv(gym.Env):
                 if self._env[row][col] == TEAM1_ENTITY:
                     cur_ent = GroundVehicle((col, row))
                     self.team1.append(cur_ent)
+                    self.team_home[row][col] = TEAM1_BACKGROUND
                 elif self._env[row][col] == TEAM2_ENTITY:
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
+                    self.team_home[row][col] = TEAM2_BACKGROUND
 
         self.create_observation_space()
         self.state = self.observation_space
@@ -475,6 +491,8 @@ class CapEnv(gym.Env):
             self.cap_view.update_env(self._env)
         elif mode=="obs":
             self.cap_view.update_env(self.observation_space)
+        elif mode=="team":
+            self.cap_view.update_env(self.team_home)
         return
 
 class Agent():
