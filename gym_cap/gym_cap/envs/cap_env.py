@@ -8,6 +8,7 @@ from gym.utils import seeding
 from .cap_view2d import CaptureView2D
 from .const import TeamConst, MapConst
 from .create_map import CreateMap
+from .enemy_ai import EnemyAI
 
 from pandas import *
 
@@ -381,19 +382,19 @@ class CapEnv(gym.Env):
         #TODO
         #Get team2 actions from heuristic function
         # team2_actions = generate_actions()
-        team2_actions = self.action_space.sample()
+        team2_actions = EnemyAI.patrol(self.team_home,self.team2)
 
         #Move team2
-        if mode=="run_away":
-            team2_actions = generate_run_actions()
-        elif mode=="random":
-            team2_actions = self.action_space.sample()
-        elif mode=="defend":
-            team2_actions = self.action_space.sample()
-        elif mode=="attack":
-            team2_actions = self.action_space.sample()
-        elif mode=="sandbox":
-            self.team2=[]
+#        if mode=="run_away":
+#            team2_actions = generate_run_actions()
+#        elif mode=="random":
+#            team2_actions = self.action_space.sample()
+#        elif mode=="defend":
+#            team2_actions = EnemyAI.patrol(self.team2)
+#        elif mode=="attack":
+#            team2_actions = self.action_space.sample()
+#        elif mode=="sandbox":
+#            self.team2=[]
         for i in range(len(team2_actions)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
 
