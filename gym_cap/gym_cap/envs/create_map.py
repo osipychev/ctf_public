@@ -6,7 +6,12 @@ class CreateMap:
     given dimension size, number of obstacles,
     and number of agents for each team"""
 
-    def gen_map(name, dim=20, n_obst=4, n_agents=4):
+    def gen_map(name, dim=20, n_obst=4, n_agents=4, in_seed=None):
+        """
+        0 <= in_seed <= 2**32
+        """
+        if in_seed != None:
+            np.random.seed(in_seed)
         new_map = np.zeros([dim, dim], dtype=int)
 
         # zones and obstacles init
