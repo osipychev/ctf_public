@@ -77,7 +77,7 @@ class CapEnv(gym.Env):
         self._seed()
 
     #TODO
-    def create_env(self, matrix_file):
+    def create_env(self, matrix_file, in_seed=None):
         """
         Loads numpy file
 
@@ -93,7 +93,7 @@ class CapEnv(gym.Env):
 #        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
 #        self._env = np.load(rel_path)
 #        self._env = self._env.transpose()
-        self._env = CreateMap.gen_map('map',50,5,4)
+        self._env = CreateMap.gen_map('map',50,5,4, in_seed)
         self._env = self._env.transpose()
 
     #TODO
@@ -429,7 +429,7 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    def _reset(self):
+    def _reset(self, in_seed=None):
         """
         Resets the game
 
@@ -443,7 +443,7 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
-        self.create_env(self.matrix_file)
+        self.create_env(self.matrix_file, in_seed)
         self.team_home = self._env.copy()
 
         self.team1 = []
@@ -458,9 +458,6 @@ class CapEnv(gym.Env):
                     cur_ent = GroundVehicle((col, row))
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
-        # print("Reset")
-        # print(DataFrame(self.team_home))
-        # print(DataFrame(self._env))
 
         self.create_observation_space()
         self.state = self.observation_space
