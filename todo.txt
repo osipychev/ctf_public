@@ -9,10 +9,28 @@ X. Attack Range
 Karman
 X. Remove absolue paths
 4. Pygame White screen
-5. Video
-9. Training environment (no enemy)
-10. Larger environment
+X. Video
+X. Training environment (no enemy)
+X. Larger environment
 
 3. Search Mode
-8. Reward
 9. Agents
+
+
+
+1. Add complexity:
+    Observation changes (diamond and wall blocks)
+    UAV
+    Reward (game over, time, units alive, units_dead (?))
+    Observe All
+    Interactions (probability of hit)
+    Environment initialization
+    gray team
+    training environments (different game complexities, small, medium, large, no civilian, survive (?))
+    end condition when no units and time
+
+1.5
+    training file intermediate feedback
+
+2. Consts in const file
+3. Conda env cleanup
