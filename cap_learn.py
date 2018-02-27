@@ -4,7 +4,7 @@ import gym_cap
 
 start_time = time.time()
 env = gym.make("cap-v0")
-observation = env.reset()
+observation = env.reset(0)
 done = False
 t = 0
 while not done:

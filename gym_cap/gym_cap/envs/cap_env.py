@@ -68,6 +68,7 @@ class CapEnv(gym.Env):
                                        shape=(len(self.team1),), dtype=int)
 
         self.create_observation_space()
+        self.create_observation_space(2)
         self.state = self.observation_space
         self.cap_view = CaptureView2D()
         self.game_lost = False
@@ -108,7 +109,7 @@ class CapEnv(gym.Env):
         """
         pass
 
-    def create_observation_space(self):
+    def create_observation_space(self, team=1):
         """
         Creates the observation space in self.observation_space
 
@@ -118,17 +119,31 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         #Always returns team1
-        self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
-        for agent in self.team1:
-            if not agent.isAlive:
-                continue
-            loc = agent.get_loc()
-            for xi in range(-agent.range, agent.range+1):
-                for yi in range(-agent.range, agent.range+1):
-                    locx, locy = loc[0] + xi, loc[1] + yi
-                    if not (locx < 0 or locx > self.map_size[0]-1) and \
-                            not (locy < 0 or locy > self.map_size[1]-1):
-                        self.observation_space[locy][locx] = self._env[locy][locx]
+        if team == 1:
+            self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
+            for agent in self.team1:
+                if not agent.isAlive:
+                    continue
+                loc = agent.get_loc()
+                for xi in range(-agent.range, agent.range+1):
+                    for yi in range(-agent.range, agent.range+1):
+                        locx, locy = loc[0] + xi, loc[1] + yi
+                        if not (locx < 0 or locx > self.map_size[0]-1) and \
+                                not (locy < 0 or locy > self.map_size[1]-1):
+                            self.observation_space[locy][locx] = self._env[locy][locx]
+        else:
+            self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
+            for agent in self.team2:
+                if not agent.isAlive:
+                    continue
+                loc = agent.get_loc()
+                for xi in range(-agent.range, agent.range+1):
+                    for yi in range(-agent.range, agent.range+1):
+                        locx, locy = loc[0] + xi, loc[1] + yi
+                        if not (locx < 0 or locx > self.map_size[0]-1) and \
+                                not (locy < 0 or locy > self.map_size[1]-1):
+                            self.observation_space2[locy][locx] = self._env[locy][locx]
+
 
     def move_entity(self, action, unit, team):
         """
@@ -373,7 +388,7 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="random"
+        mode="norm"
         #DEBUGGING
         # print(DataFrame(self._env))
         for i in range(len(entities_action)):
@@ -393,9 +408,15 @@ class CapEnv(gym.Env):
 #            team2_actions = EnemyAI.patrol(self.team2)
 #        elif mode=="attack":
 #            team2_actions = self.action_space.sample()
-#        elif mode=="sandbox":
-#            self.team2=[]
-        for i in range(len(team2_actions)):
+        if mode=="sandbox":
+            for i in range(len(self.team2)):
+                locx, locy = self.team2[i].get_loc()
+                if self.team2[i].atHome:
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                else:
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+            self.team2=[]
+        for i in range(len(self.team2)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
 
         #Check for dead
@@ -414,6 +435,7 @@ class CapEnv(gym.Env):
         reward = 0
 
         self.create_observation_space()
+        self.create_observation_space(2)
         self.state = self.observation_space
 
         #TODO game over
@@ -484,6 +506,8 @@ class CapEnv(gym.Env):
             self.cap_view.update_env(self._env)
         elif mode=="obs":
             self.cap_view.update_env(self.observation_space)
+        elif mode=="obs2":
+            self.cap_view.update_env(self.observation_space2)
         elif mode=="team":
             self.cap_view.update_env(self.team_home)
         return
