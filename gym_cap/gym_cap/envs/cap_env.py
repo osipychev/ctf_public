@@ -6,20 +6,11 @@ import os
 from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
-from .const import TeamConst, MapConst
+from .const import *
 from .create_map import CreateMap
 from .enemy_ai import EnemyAI
 
 from pandas import *
-
-TEAM1_BACKGROUND = 0
-TEAM2_BACKGROUND = 1
-TEAM1_ENTITY = 2
-TEAM2_ENTITY = 3
-TEAM1_FLAG = 4
-TEAM2_FLAG = 5
-OBSTACLE = 6
-DEAD = 7
 
 
 """
@@ -53,12 +44,20 @@ class CapEnv(gym.Env):
         self.team2 = []
         for row in range(len(self._env)):
             for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_ENTITY:
+                if self._env[row][col] == TEAM1_UGV:
                     cur_ent = GroundVehicle((col, row))
                     self.team1.append(cur_ent)
                     self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_ENTITY:
+                elif self._env[row][col] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((col, row))
+                    self.team1.append(cur_ent)
+                    self.team_home[row][col] = TEAM1_BACKGROUND
+                elif self._env[row][col] == TEAM2_UGV:
                     cur_ent = GroundVehicle((col, row))
+                    self.team2.append(cur_ent)
+                    self.team_home[row][col] = TEAM2_BACKGROUND
+                elif self._env[row][col] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((col, row))
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
 
@@ -94,7 +93,15 @@ class CapEnv(gym.Env):
 #        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
 #        self._env = np.load(rel_path)
 #        self._env = self._env.transpose()
-        self._env = CreateMap.gen_map('map',50,5,4, in_seed)
+        """
+            0   : obstacles
+            1   : player UGV
+            2   : player UAV
+            3   : enemy UGV
+            4   : enemy UAV
+            5   : gray units
+        """
+        self._env = CreateMap.gen_map('map', 20, in_seed)
         self._env = self._env.transpose()
 
     #TODO
@@ -125,12 +132,18 @@ class CapEnv(gym.Env):
                 if not agent.isAlive:
                     continue
                 loc = agent.get_loc()
-                for xi in range(-agent.range, agent.range+1):
-                    for yi in range(-agent.range, agent.range+1):
-                        locx, locy = loc[0] + xi, loc[1] + yi
-                        if not (locx < 0 or locx > self.map_size[0]-1) and \
-                                not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space[locy][locx] = self._env[locy][locx]
+                for i in range(agent.range+1):
+                    locx, locy = loc[0] + i, loc[1] + (agent.range-i)
+                    neg_locx = loc[0] - i
+                    neg_locy = loc[1] - (agent.range-i)
+                    for j in range(neg_locy, locy+1):
+                        if locx < self.map_size[0]:
+                            if  j < self.map_size[1] and j >= 0:
+                                self.observation_space[j][locx] = self._env[j][locx]
+                        if neg_locx >= 0:
+                            if  j < self.map_size[1] and j >= 0:
+                                self.observation_space[j][neg_locx] = self._env[j][neg_locx]
+
         else:
             self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team2:
@@ -169,8 +182,8 @@ class CapEnv(gym.Env):
             if action == "N":
                 if locy-unit_step >= 0 \
                         and self._env[locy-unit_step][locx]!=OBSTACLE \
-                        and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
-                        and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM1_UGV \
+                        and self._env[locy-unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM1_FLAG:
                     if self._env[locy-unit_step][locx]==TEAM2_FLAG:
                         self.game_won = True
@@ -181,12 +194,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM2_BACKGROUND
                     locx, locy = self.team1[unit].get_loc()
                     self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
-                    self._env[locy][locx] = TEAM1_ENTITY
+                    if self.team1[unit].air:
+                        self._env[locy][locx] = TEAM1_UAV
+                    else:
+                        self._env[locy][locx] = TEAM1_UGV
             elif action == "S":
                 if locy+unit_step < self.map_size[1] \
                         and self._env[locy+unit_step][locx]!=OBSTACLE \
-                        and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
-                        and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM1_UGV \
+                        and self._env[locy+unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM1_FLAG:
                     if self._env[locy+unit_step][locx]==TEAM2_FLAG:
                         self.game_won = True
@@ -197,12 +213,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM2_BACKGROUND
                     locx, locy = self.team1[unit].get_loc()
                     self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
-                    self._env[locy][locx] = TEAM1_ENTITY
+                    if self.team1[unit].air:
+                        self._env[locy][locx] = TEAM1_UAV
+                    else:
+                        self._env[locy][locx] = TEAM1_UGV
             elif action == "E":
                 if locx+unit_step < self.map_size[0] \
                         and self._env[locy][locx+unit_step]!=OBSTACLE \
-                        and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
-                        and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM1_UGV \
+                        and self._env[locy][locx+unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM1_FLAG:
                     if self._env[locy][locx+unit_step]==TEAM2_FLAG:
                         self.game_won = True
@@ -213,12 +232,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM2_BACKGROUND
                     locx, locy = self.team1[unit].get_loc()
                     self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
-                    self._env[locy][locx] = TEAM1_ENTITY
+                    if self.team1[unit].air:
+                        self._env[locy][locx] = TEAM1_UAV
+                    else:
+                        self._env[locy][locx] = TEAM1_UGV
             elif action == "W":
                 if locx-unit_step >= 0 \
                         and self._env[locy][locx-unit_step]!=OBSTACLE \
-                        and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
-                        and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM1_UGV \
+                        and self._env[locy][locx-unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM1_FLAG:
                     if self._env[locy][locx-unit_step]==TEAM2_FLAG:
                         self.game_won = True
@@ -229,7 +251,10 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM2_BACKGROUND
                     locx, locy = self.team1[unit].get_loc()
                     self.team1[unit].atHome = self.team_home[locy][locx] == TEAM1_BACKGROUND
-                    self._env[locy][locx] = TEAM1_ENTITY
+                    if self.team1[unit].air:
+                        self._env[locy][locx] = TEAM1_UAV
+                    else:
+                        self._env[locy][locx] = TEAM1_UGV
         elif team == 2:
             if not self.team2[unit].isAlive:
                 return
@@ -238,8 +263,8 @@ class CapEnv(gym.Env):
             if action == "N":
                 if locy-unit_step >= 0 \
                         and self._env[locy-unit_step][locx]!=OBSTACLE \
-                        and self._env[locy-unit_step][locx]!=TEAM1_ENTITY \
-                        and self._env[locy-unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy-unit_step][locx]!=TEAM1_UGV \
+                        and self._env[locy-unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
                     if self._env[locy-unit_step][locx]==TEAM1_FLAG:
                         self.game_lost = True
@@ -250,12 +275,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM1_BACKGROUND
                     locx, locy = self.team2[unit].get_loc()
                     self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
-                    self._env[locy][locx] = TEAM2_ENTITY
+                    if self.team2[unit].air:
+                        self._env[locy][locx] = TEAM2_UAV
+                    else:
+                        self._env[locy][locx] = TEAM2_UGV
             elif action == "S":
                 if locy+unit_step < self.map_size[1] \
                         and self._env[locy+unit_step][locx]!=OBSTACLE \
-                        and self._env[locy+unit_step][locx]!=TEAM1_ENTITY \
-                        and self._env[locy+unit_step][locx]!=TEAM2_ENTITY \
+                        and self._env[locy+unit_step][locx]!=TEAM1_UGV \
+                        and self._env[locy+unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
                     if self._env[locy+unit_step][locx]==TEAM1_FLAG:
                         self.game_lost = True
@@ -266,12 +294,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM1_BACKGROUND
                     locx, locy = self.team2[unit].get_loc()
                     self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
-                    self._env[locy][locx] = TEAM2_ENTITY
+                    if self.team2[unit].air:
+                        self._env[locy][locx] = TEAM2_UAV
+                    else:
+                        self._env[locy][locx] = TEAM2_UGV
             elif action == "E":
                 if locx+unit_step < self.map_size[0] \
                         and self._env[locy][locx+unit_step]!=OBSTACLE \
-                        and self._env[locy][locx+unit_step]!=TEAM1_ENTITY \
-                        and self._env[locy][locx+unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx+unit_step]!=TEAM1_UGV \
+                        and self._env[locy][locx+unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
                     if self._env[locy][locx+unit_step]==TEAM1_FLAG:
                         self.game_lost = True
@@ -282,12 +313,15 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM1_BACKGROUND
                     locx, locy = self.team2[unit].get_loc()
                     self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
-                    self._env[locy][locx] = TEAM2_ENTITY
+                    if self.team2[unit].air:
+                        self._env[locy][locx] = TEAM2_UAV
+                    else:
+                        self._env[locy][locx] = TEAM2_UGV
             elif action == "W":
                 if locx-unit_step >= 0 \
                         and self._env[locy][locx-unit_step]!=OBSTACLE \
-                        and self._env[locy][locx-unit_step]!=TEAM1_ENTITY \
-                        and self._env[locy][locx-unit_step]!=TEAM2_ENTITY \
+                        and self._env[locy][locx-unit_step]!=TEAM1_UGV \
+                        and self._env[locy][locx-unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
                     if self._env[locy][locx-unit_step]==TEAM1_FLAG:
                         self.game_lost = True
@@ -298,7 +332,10 @@ class CapEnv(gym.Env):
                         self._env[locy][locx] = TEAM1_BACKGROUND
                     locx, locy = self.team2[unit].get_loc()
                     self.team2[unit].atHome = self.team_home[locy][locx] == TEAM2_BACKGROUND
-                    self._env[locy][locx] = TEAM2_ENTITY
+                    if self.team2[unit].air:
+                        self._env[locy][locx] = TEAM2_UAV
+                    else:
+                        self._env[locy][locx] = TEAM2_UGV
         else:
             raise("Team number must be 1 or 2.")
 
@@ -326,7 +363,7 @@ class CapEnv(gym.Env):
                         break
                     if y+locy >= self.map_size[1] or y+locy < 0:
                         continue
-                    if self._env[locy+y][locx+x] == TEAM2_ENTITY:
+                    if self._env[locy+y][locx+x] == TEAM2_UGV:
                         if self.team_home[locy+y][locx+x] == TEAM1_BACKGROUND:
                             for i in range(len(self.team2)):
                                 enemy_locx, enemy_locy = self.team2[i].get_loc()
@@ -343,7 +380,7 @@ class CapEnv(gym.Env):
                         break
                     if y+locy >= self.map_size[1] or y+locy < 0:
                         continue
-                    if self._env[locy+y][locx+x] == TEAM1_ENTITY:
+                    if self._env[locy+y][locx+x] == TEAM1_UGV:
                         if self.team_home[locy+y][locx+x] == TEAM2_BACKGROUND:
                             for i in range(len(self.team1)):
                                 enemy_locx, enemy_locy = self.team1[i].get_loc()
@@ -388,7 +425,7 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="norm"
+        mode="random"
         #DEBUGGING
         # print(DataFrame(self._env))
         for i in range(len(entities_action)):
@@ -397,7 +434,6 @@ class CapEnv(gym.Env):
         #TODO
         #Get team2 actions from heuristic function
         # team2_actions = generate_actions()
-        team2_actions = EnemyAI.patrol(self.team_home,self.team2)
 
         #Move team2
 #        if mode=="run_away":
@@ -416,6 +452,10 @@ class CapEnv(gym.Env):
                 else:
                     self._env[locy][locx] = TEAM1_BACKGROUND
             self.team2=[]
+        elif mode=="patrol":
+            team2_actions = EnemyAI.patrol(self.team_home,self.team2)
+        elif mode=="random":
+            team2_actions = self.action_space.sample()  # choose random action
         for i in range(len(self.team2)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
 
@@ -472,12 +512,20 @@ class CapEnv(gym.Env):
         self.team2 = []
         for row in range(len(self._env)):
             for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_ENTITY:
+                if self._env[row][col] == TEAM1_UGV:
                     cur_ent = GroundVehicle((col, row))
                     self.team1.append(cur_ent)
                     self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_ENTITY:
+                elif self._env[row][col] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((col, row))
+                    self.team1.append(cur_ent)
+                    self.team_home[row][col] = TEAM1_BACKGROUND
+                elif self._env[row][col] == TEAM2_UGV:
                     cur_ent = GroundVehicle((col, row))
+                    self.team2.append(cur_ent)
+                    self.team_home[row][col] = TEAM2_BACKGROUND
+                elif self._env[row][col] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((col, row))
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
 
@@ -518,9 +566,10 @@ class Agent():
         self.isAlive = True
         self.atHome = True
         self.x, self.y = loc
-        self.step = TeamConst.UGV_STEP
-        self.range = TeamConst.UGV_RANGE
-        self.a_range = TeamConst.UGV_A_RANGE
+        self.step = UGV_STEP
+        self.range = UGV_RANGE
+        self.a_range = UGV_A_RANGE
+        self.air = False
 
     def move(self, action):
         x, y = self.x, self.y
@@ -537,8 +586,8 @@ class Agent():
         else:
             print("error: wrong action selected")
 
-        self.x = x#max(min(MapConst.WORLD_W-1, x), 0)
-        self.y = y#max(min(MapConst.WORLD_H-1, y), 0)
+        self.x = x#max(min(WORLD_W-1, x), 0)
+        self.y = y#max(min(WORLD_H-1, y), 0)
 
     def get_loc(self):
         return self.x, self.y
@@ -556,14 +605,15 @@ class AerialVehicle(Agent):
 
     def __init__(self, loc):
         Agent.__init__(self, loc)
-        self.step = TeamConst.UAV_STEP
-        self.range = TeamConst.UAV_RANGE
-        self.a_range = TeamConst.UAV_A_RANGE
+        self.step = UAV_STEP
+        self.range = UAV_RANGE
+        self.a_range = UAV_A_RANGE
+        self.air = True
 
 class GrayAgent(GroundVehicle):
 
     def __init__(self, loc):
-        Agent.__init__(self, loc, TeamConst.GRAY)
+        Agent.__init__(self, loc, GRAY)
         self.direction = [0, 0]
         # ! not used for now
 
