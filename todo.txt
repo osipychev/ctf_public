@@ -15,12 +15,15 @@ X. Larger environment
 
 3. Search Mode
 9. Agents
+10. create_map.py docs
+
+BUG: Random place two units in same square (haven't tested yet, but probably an issue)
 
 
 
 1. Add complexity:
-    Observation changes (diamond and wall blocks)
-    UAV
+    Observation changes wall blocks
+    UAV movement (over walls and anywhere from 1 block to range blocks)
     Reward (game over, time, units alive, units_dead (?))
     Observe All
     Interactions (probability of hit)

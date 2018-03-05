@@ -11,12 +11,12 @@ while not done:
     action = env.action_space.sample()  # choose random action
     # action = [2, 2, 2, 2]
     observation, reward, done, info = env.step(action)  # feedback from environment
-    #obs or env
+    #obs, obs2,  or env
     env.render(mode="env")
     t += 1
     # if not t % 100:
         # print(t, info)
-    time.sleep(.1)
+    time.sleep(2)
     if t == 100000:
         break
 print("--- %s seconds ---" % (time.time() - start_time))

@@ -2,16 +2,7 @@ import pygame
 import random
 import numpy as np
 import os
-
-TILE_DICT = {-1 : (200, 200, 200),
-             0 : (0, 0, 120),
-             1 : (120, 0, 0),
-             2 : (0, 0, 255),
-             3 : (255, 0, 0),
-             4 : (0, 255, 255),
-             5 : (255, 255, 0),
-             6 : (120, 120, 120),
-             7 : (0, 0, 0)}
+from .const import *
 
 QUIT = 12
 
@@ -40,8 +31,11 @@ class CaptureView2D:
 
         for row in range(map_h):
             for col in range(map_w):
-                cur_color = TILE_DICT[env[row][col]]
-                pygame.draw.rect(self.screen, cur_color, (col*tile_w, row*tile_h, tile_w, tile_h))
+                cur_color = COLOR_DICT[env[row][col]]
+                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+                    pygame.draw.ellipse(self.screen, cur_color, [col*tile_w, row*tile_h, tile_w, tile_h])
+                else:
+                    pygame.draw.rect(self.screen, cur_color, (col*tile_w, row*tile_h, tile_w, tile_h))
         pygame.display.update()
 
 
