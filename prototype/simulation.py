@@ -3,6 +3,7 @@
 """
 
 import numpy as np
+np.set_printoptions(threshold=np.nan)
 import matplotlib.pyplot as plt
 
 from const import TeamConst, MapConst
@@ -29,10 +30,12 @@ for i in range(TeamConst.NUM_GRAY):
 
 gr.update_map(agents_list)
 
-fig = plt.figure(0, figsize=[15, 5])
+#fig = plt.figure(0, figsize=[15, 5])
 
-while(plt.fignum_exists(0)):
+#while(plt.fignum_exists(0)):
+for t in range(10):
     for agent in agents_list:
         agent.move(np.random.randint(0, 5))
         gr.update_map(agents_list)
-    gr.plot_all()
+    print(gr.get_map().flatten())
+#    gr.plot_all()
