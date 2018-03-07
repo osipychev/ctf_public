@@ -23,7 +23,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["N", "E", "S", "W", "X"]
 
-    def __init__(self, env_matrix_file=None):
+    def __init__(self, map_size=20):
         """
         Constructor
 
@@ -31,12 +31,9 @@ class CapEnv(gym.Env):
         ----------
         self    : object
             CapEnv object
-        env_matrix_file    : string
-            Environment file. If none, size is expected
         """
 
-        self.matrix_file = env_matrix_file
-        self.create_env(env_matrix_file)
+        self._env = CreateMap.gen_map('map', map_size)
         self.map_size = (len(self._env[0]), len(self._env))
         self.team_home = self._env.copy()
 
@@ -76,33 +73,31 @@ class CapEnv(gym.Env):
         #TODO necessary?
         self._seed()
 
-    #TODO
-    def create_env(self, matrix_file, in_seed=None):
-        """
-        Loads numpy file
-
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        matrix_file    : string
-            Environment file
-        """
-#        dir_path = os.path.abspath(os.path.dirname(__file__))
-#        rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
-#        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
-#        self._env = np.load(rel_path)
-#        self._env = self._env.transpose()
-        """
-            0   : obstacles
-            1   : player UGV
-            2   : player UAV
-            3   : enemy UGV
-            4   : enemy UAV
-            5   : gray units
-        """
-        self._env = CreateMap.gen_map('map', 20, in_seed)
-        self._env = self._env.transpose()
+#    #TODO
+#    def create_env(self, gen_size=20, in_seed=None):
+#        """
+#        Loads numpy file
+#
+#        Parameters
+#        ----------
+#        self    : object
+#            CapEnv object
+#        """
+##        dir_path = os.path.abspath(os.path.dirname(__file__))
+##        rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
+##        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
+##        self._env = np.load(rel_path)
+##        self._env = self._env.transpose()
+#        """
+#            0   : obstacles
+#            1   : player UGV
+#            2   : player UAV
+#            3   : enemy UGV
+#            4   : enemy UAV
+#            5   : gray units
+#        """
+#        self._env = CreateMap.gen_map('map', dim=100 , in_seed=in_seed)
+#        
 
     #TODO
     def create_reward(self):
@@ -505,7 +500,7 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
-        self.create_env(self.matrix_file, in_seed)
+        self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=in_seed)
         self.team_home = self._env.copy()
 
         self.team1 = []
@@ -615,23 +610,30 @@ class GrayAgent(GroundVehicle):
     def __init__(self, loc):
         Agent.__init__(self, loc, GRAY)
         self.direction = [0, 0]
+        self.isDone = False
         # ! not used for now
 
-    def check_complete(self):
-        return self.get_loc == self.direction
+#    def move():
+#        if not self.isDone:
+#            self.l
+#
+#    def check_complete(self):
+#        return self.isDone
 
 #Different environment sizes
-class CapEnvSample20x20(CapEnv):
+class CapEnvGenerate20x20(CapEnv):
     def __init__(self):
-        super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
+        super(CapEnvGenerate20x20, self).__init__(map_size=20)
 
-# class CapEnvSample100x100(CapEnv):
-    # def __init__(self):
-        # super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
+class CapEnvGenerate100x100(CapEnv):
+    def __init__(self):
+        super(CapEnvGenerate100x100, self).__init__(map_size=100)
 
-# class CapEnvRandom(CapEnv):
-    # def __init__(self):
-        # super(CapEnvSample20x20, self).__init__(env_matrix_file="ctf_samples/cap2d_000.npy")
+class CapEnvGenerate500x500(CapEnv):
+    def __init__(self):
+        super(CapEnvGenerate500x500, self).__init__(map_size=500)
+
+
 #DEBUGGING
 # if __name__ == "__main__":
     # cap_env = CapEnv(env_matrix_file="ctf_samples/cap2d_000.npy")

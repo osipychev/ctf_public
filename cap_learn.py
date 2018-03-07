@@ -16,7 +16,7 @@ while not done:
     t += 1
     # if not t % 100:
         # print(t, info)
-    time.sleep(2)
+    time.sleep(.5)
     if t == 100000:
         break
 print("--- %s seconds ---" % (time.time() - start_time))

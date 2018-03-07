@@ -62,7 +62,7 @@ class CreateMap:
                                  TEAM2_BACKGROUND, TEAM2_UAV)
 
         #np.save('map.npy', new_map)
-        return new_map
+        return new_map.transpose()
 
     def gen_random(new_map, code_where, code_what):
         dim = new_map.shape[0]
