@@ -17,9 +17,14 @@ X. Larger environment
 9. Agents
 10. create_map.py docs
 
-BUG: Random place two units in same square (haven't tested yet, but probably an issue)
+Denis
+X. discrete map sizes. env init with v0,v1,v2
 
+BUG: Random place two units in same square (haven't tested yet, but probably an issue) 
+Denis note: impossible. map_gen does a check and put new entity in free space only
 
+BUG:
+reset function performed right after init and does the same job twice. can we just call reset from init?
 
 1. Add complexity:
     Observation changes wall blocks
@@ -27,7 +32,7 @@ BUG: Random place two units in same square (haven't tested yet, but probably an 
     Reward (game over, time, units alive, units_dead (?))
     Observe All
     Interactions (probability of hit)
-    Environment initialization
+  X Environment initialization
     gray team
     training environments (different game complexities, small, medium, large, no civilian, survive (?))
     end condition when no units and time
