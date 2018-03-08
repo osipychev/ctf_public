@@ -67,50 +67,45 @@ class CapEnv(gym.Env):
         self.create_observation_space(RED)
         self.create_observation_space(BLUE)
         self.state = self.observation_space
-        self.cap_view = CaptureView2D()
+        self.cap_view = CaptureView2D(screen_size=(1000, 1000))
         self.game_lost = False
         self.game_won = False
+        self.cur_step = 0
 
         #TODO necessary?
         self._seed()
 
-#    #TODO
-#    def create_env(self, gen_size=20, in_seed=None):
-#        """
-#        Loads numpy file
-#
-#        Parameters
-#        ----------
-#        self    : object
-#            CapEnv object
-#        """
-##        dir_path = os.path.abspath(os.path.dirname(__file__))
-##        rel_path = os.path.join(dir_path, "ctf_samples", matrix_file)
-##        rel_path = os.path.join(dir_path, "./ctf_samples/cap2d_000.npy")
-##        self._env = np.load(rel_path)
-##        self._env = self._env.transpose()
-#        """
-#            0   : obstacles
-#            1   : player UGV
-#            2   : player UAV
-#            3   : enemy UGV
-#            4   : enemy UAV
-#            5   : gray units
-#        """
-#        self._env = CreateMap.gen_map('map', dim=100 , in_seed=in_seed)
-#        
-
-    #TODO
     def create_reward(self):
         """
-        temp. Not complete
+        Range (-1, 1)
 
         Parameters
         ----------
         self    : object
             CapEnv object
         """
-        pass
+        reward = 0
+        #Win and loss return max rewards
+        if self.game_lost:
+            return -1
+        if self.game_won:
+            return 1
+
+        #Dead enemy team gives .5/total units for each dead unit
+        for i in self.team2:
+            if not i.isAlive:
+                reward+=(.5/len(self.team2))
+        for i in self.team1:
+            if not i.isAlive:
+                reward-=(.5/len(self.team1))
+
+        #10,000 steps returns -.5
+        if self.cur_step > 10000:
+            reward-=.5
+        else:
+            reward-=((self.cur_step/10000.0)*.5)
+
+        return reward
 
     def create_observation_space(self, team=BLUE):
         """
@@ -127,7 +122,7 @@ class CapEnv(gym.Env):
             for agent in self.team1:
                 if not agent.isAlive:
                     continue
-                loc = agent.get_loc()                
+                loc = agent.get_loc()
                 for i in range(-agent.range, agent.range + 1):
                     for j in range(-agent.range, agent.range + 1):
                         locx, locy = i + loc[0], j + loc[1]
@@ -195,7 +190,7 @@ class CapEnv(gym.Env):
                         and self._env[locy-unit_step][locx]!=TEAM1_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM1_FLAG:
-                    if self._env[locy-unit_step][locx]==TEAM2_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM2_FLAG and not self.team1[unit].air:
                         self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
@@ -214,7 +209,7 @@ class CapEnv(gym.Env):
                         and self._env[locy+unit_step][locx]!=TEAM1_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM1_FLAG:
-                    if self._env[locy+unit_step][locx]==TEAM2_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM2_FLAG and not self.team1[unit].air:
                         self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
@@ -233,7 +228,7 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx+unit_step]!=TEAM1_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM1_FLAG:
-                    if self._env[locy][locx+unit_step]==TEAM2_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM2_FLAG and not self.team1[unit].air:
                         self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
@@ -252,7 +247,7 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx-unit_step]!=TEAM1_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM1_FLAG:
-                    if self._env[locy][locx-unit_step]==TEAM2_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM2_FLAG and not self.team1[unit].air:
                         self.game_won = True
                     self.team1[unit].move(action)
                     if self.team1[unit].atHome:
@@ -276,7 +271,7 @@ class CapEnv(gym.Env):
                         and self._env[locy-unit_step][locx]!=TEAM1_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
-                    if self._env[locy-unit_step][locx]==TEAM1_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM1_FLAG and not self.team2[unit].air:
                         self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
@@ -295,7 +290,7 @@ class CapEnv(gym.Env):
                         and self._env[locy+unit_step][locx]!=TEAM1_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM2_UGV \
                         and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
-                    if self._env[locy+unit_step][locx]==TEAM1_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM1_FLAG and not self.team2[unit].air:
                         self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
@@ -314,7 +309,7 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx+unit_step]!=TEAM1_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
-                    if self._env[locy][locx+unit_step]==TEAM1_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM1_FLAG and not self.team2[unit].air:
                         self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
@@ -333,7 +328,7 @@ class CapEnv(gym.Env):
                         and self._env[locy][locx-unit_step]!=TEAM1_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM2_UGV \
                         and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
-                    if self._env[locy][locx-unit_step]==TEAM1_FLAG:
+                    if self._env[locy-unit_step][locx]==TEAM1_FLAG and not self.team2[unit].air:
                         self.game_lost = True
                     self.team2[unit].move(action)
                     if self.team2[unit].atHome:
@@ -365,39 +360,39 @@ class CapEnv(gym.Env):
             Represents which team the unit belongs to
         """
         if team == 1:
-            locx, locy = self.team1[entity_num].get_loc()
+            loc = self.team1[entity_num].get_loc()
             cur_range = self.team1[entity_num].a_range
             for x in range(-cur_range, cur_range+1):
                 for y in range(-cur_range, cur_range+1):
-                    if x+locx >= self.map_size[0] or x+locx < 0:
-                        break
-                    if y+locy >= self.map_size[1] or y+locy < 0:
-                        continue
-                    if self._env[locy+y][locx+x] == TEAM2_UGV:
-                        if self.team_home[locy+y][locx+x] == TEAM1_BACKGROUND:
-                            for i in range(len(self.team2)):
-                                enemy_locx, enemy_locy = self.team2[i].get_loc()
-                                if enemy_locx == locx+x and enemy_locy == locy+y:
-                                    self.team2[i].isAlive = False
-                                    self._env[locy+y][locx+x] = DEAD
-                                    break
+                    locx, locy = x + loc[0], y + loc[1]
+                    if (x*x + y*y <= cur_range**2) and \
+                        not (locx < 0 or locx > self.map_size[0]-1) and \
+                        not (locy < 0 or locy > self.map_size[1]-1):
+                        if self._env[locy][locx] == TEAM2_UGV:
+                            if self.team_home[locy][locx] == TEAM1_BACKGROUND:
+                                for i in range(len(self.team2)):
+                                    enemy_locx, enemy_locy = self.team2[i].get_loc()
+                                    if enemy_locx == locx and enemy_locy == locy:
+                                        self.team2[i].isAlive = False
+                                        self._env[locy][locx] = DEAD
+                                        break
         elif team == 2:
-            locx, locy = self.team2[entity_num].get_loc()
+            loc = self.team2[entity_num].get_loc()
             cur_range = self.team2[entity_num].a_range
             for x in range(-cur_range, cur_range+1):
                 for y in range(-cur_range, cur_range+1):
-                    if x+locx >= self.map_size[0] or x+locx < 0:
-                        break
-                    if y+locy >= self.map_size[1] or y+locy < 0:
-                        continue
-                    if self._env[locy+y][locx+x] == TEAM1_UGV:
-                        if self.team_home[locy+y][locx+x] == TEAM2_BACKGROUND:
-                            for i in range(len(self.team1)):
-                                enemy_locx, enemy_locy = self.team1[i].get_loc()
-                                if enemy_locx == locx+x and enemy_locy == locy+y:
-                                    self.team1[i].isAlive = False
-                                    self._env[locy+y][locx+x] = DEAD
-                                    break
+                    locx, locy = x + loc[0], y + loc[1]
+                    if (x*x + y*y <= cur_range**2) and \
+                        not (locx < 0 or locx > self.map_size[0]-1) and \
+                        not (locy < 0 or locy > self.map_size[1]-1):
+                        if self._env[locy][locx] == TEAM1_UGV:
+                            if self.team_home[locy][locx] == TEAM2_BACKGROUND:
+                                for i in range(len(self.team1)):
+                                    enemy_locx, enemy_locy = self.team1[i].get_loc()
+                                    if enemy_locx == locx+x and enemy_locy == locy+y:
+                                        self.team1[i].isAlive = False
+                                        self._env[locy][locx] = DEAD
+                                        break
 
 
     #TODO necessary?
@@ -438,6 +433,7 @@ class CapEnv(gym.Env):
         mode="random"
         #DEBUGGING
         # print(DataFrame(self._env))
+        self.cur_step+=1
         for i in range(len(entities_action)):
             self.move_entity(self.ACTION[entities_action[i]], i, 1)
 
@@ -480,9 +476,24 @@ class CapEnv(gym.Env):
                 continue
             self.check_dead(i, 2)
 
-        #TODO Reward statement
-        # reward = create_reward()
-        reward = 0
+        has_alive_entity = False
+        for i in self.team2:
+            if i.isAlive:
+                has_alive_entity = True
+                break
+        if not has_alive_entity and mode!="sandbox":
+            self.game_won = True
+
+        has_alive_entity = False
+        for i in self.team1:
+            if i.isAlive:
+                has_alive_entity = True
+                break
+
+        if not has_alive_entity:
+            self.game_lost = True
+
+        reward = self.create_reward()
 
         self.create_observation_space(BLUE)
         self.create_observation_space(RED)
