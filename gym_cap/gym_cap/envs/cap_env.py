@@ -127,15 +127,14 @@ class CapEnv(gym.Env):
             for agent in self.team1:
                 if not agent.isAlive:
                     continue
-                loc = agent.get_loc()
-                
+                loc = agent.get_loc()                
                 for i in range(-agent.range, agent.range + 1):
                     for j in range(-agent.range, agent.range + 1):
                         locx, locy = i + loc[0], j + loc[1]
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space[locx][locy] = self._env[locx][locy]
+                            self.observation_space[locy][locx] = self._env[locy][locx]
 #                for i in range(agent.range+1):
 #                    locx, locy = loc[0] + i, loc[1] + (agent.range-i)
 #                    neg_locx = loc[0] - i
@@ -160,7 +159,7 @@ class CapEnv(gym.Env):
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space2[locx][locy] = self._env[locx][locy]
+                            self.observation_space2[locy][locx] = self._env[locy][locx]
 #                for xi in range(-agent.range, agent.range+1):
 #                    for yi in range(-agent.range, agent.range+1):
 #                        locx, locy = loc[0] + xi, loc[1] + yi
