@@ -64,8 +64,8 @@ class CapEnv(gym.Env):
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
-        self.create_observation_space()
-        self.create_observation_space(2)
+        self.create_observation_space(RED)
+        self.create_observation_space(BLUE)
         self.state = self.observation_space
         self.cap_view = CaptureView2D()
         self.game_lost = False
