@@ -9,6 +9,7 @@ from .cap_view2d import CaptureView2D
 from .const import *
 from .create_map import CreateMap
 from .enemy_ai import EnemyAI
+from .agent import *
 
 from pandas import *
 
@@ -111,7 +112,7 @@ class CapEnv(gym.Env):
         """
         pass
 
-    def create_observation_space(self, team=1):
+    def create_observation_space(self, team=BLUE):
         """
         Creates the observation space in self.observation_space
 
@@ -121,36 +122,51 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         #Always returns team1
-        if team == 1:
+        if team == BLUE:
             self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team1:
                 if not agent.isAlive:
                     continue
                 loc = agent.get_loc()
-                for i in range(agent.range+1):
-                    locx, locy = loc[0] + i, loc[1] + (agent.range-i)
-                    neg_locx = loc[0] - i
-                    neg_locy = loc[1] - (agent.range-i)
-                    for j in range(neg_locy, locy+1):
-                        if locx < self.map_size[0]:
-                            if  j < self.map_size[1] and j >= 0:
-                                self.observation_space[j][locx] = self._env[j][locx]
-                        if neg_locx >= 0:
-                            if  j < self.map_size[1] and j >= 0:
-                                self.observation_space[j][neg_locx] = self._env[j][neg_locx]
+                
+                for i in range(-agent.range, agent.range + 1):
+                    for j in range(-agent.range, agent.range + 1):
+                        locx, locy = i + loc[0], j + loc[1]
+                        if (i*i + j*j <= agent.range**2) and \
+                            not (locx < 0 or locx > self.map_size[0]-1) and \
+                            not (locy < 0 or locy > self.map_size[1]-1):
+                            self.observation_space[locx][locy] = self._env[locx][locy]
+#                for i in range(agent.range+1):
+#                    locx, locy = loc[0] + i, loc[1] + (agent.range-i)
+#                    neg_locx = loc[0] - i
+#                    neg_locy = loc[1] - (agent.range-i)
+#                    for j in range(neg_locy, locy+1):
+#                        if locx < self.map_size[0]:
+#                            if  j < self.map_size[1] and j >= 0:
+#                                self.observation_space[j][locx] = self._env[j][locx]
+#                        if neg_locx >= 0:
+#                            if  j < self.map_size[1] and j >= 0:
+#                                self.observation_space[j][neg_locx] = self._env[j][neg_locx]
 
-        else:
+        elif team == RED:
             self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team2:
                 if not agent.isAlive:
                     continue
                 loc = agent.get_loc()
-                for xi in range(-agent.range, agent.range+1):
-                    for yi in range(-agent.range, agent.range+1):
-                        locx, locy = loc[0] + xi, loc[1] + yi
-                        if not (locx < 0 or locx > self.map_size[0]-1) and \
-                                not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space2[locy][locx] = self._env[locy][locx]
+                for i in range(-agent.range, agent.range + 1):
+                    for j in range(-agent.range, agent.range + 1):
+                        locx, locy = i + loc[0], j + loc[1]
+                        if (i*i + j*j <= agent.range**2) and \
+                            not (locx < 0 or locx > self.map_size[0]-1) and \
+                            not (locy < 0 or locy > self.map_size[1]-1):
+                            self.observation_space2[locx][locy] = self._env[locx][locy]
+#                for xi in range(-agent.range, agent.range+1):
+#                    for yi in range(-agent.range, agent.range+1):
+#                        locx, locy = loc[0] + xi, loc[1] + yi
+#                        if not (locx < 0 or locx > self.map_size[0]-1) and \
+#                                not (locy < 0 or locy > self.map_size[1]-1):
+#                            self.observation_space2[locy][locx] = self._env[locy][locx]
 
 
     def move_entity(self, action, unit, team):
@@ -469,8 +485,8 @@ class CapEnv(gym.Env):
         # reward = create_reward()
         reward = 0
 
-        self.create_observation_space()
-        self.create_observation_space(2)
+        self.create_observation_space(BLUE)
+        self.create_observation_space(RED)
         self.state = self.observation_space
 
         #TODO game over
@@ -555,70 +571,7 @@ class CapEnv(gym.Env):
             self.cap_view.update_env(self.team_home)
         return
 
-class Agent():
 
-    def __init__(self, loc):
-        self.isAlive = True
-        self.atHome = True
-        self.x, self.y = loc
-        self.step = UGV_STEP
-        self.range = UGV_RANGE
-        self.a_range = UGV_A_RANGE
-        self.air = False
-
-    def move(self, action):
-        x, y = self.x, self.y
-        if action == "X":
-            pass
-        elif action == "W":
-            x -= self.step
-        elif action == "E":
-            x += self.step
-        elif action == "N":
-            y -= self.step
-        elif action == "S":
-            y += self.step
-        else:
-            print("error: wrong action selected")
-
-        self.x = x#max(min(WORLD_W-1, x), 0)
-        self.y = y#max(min(WORLD_H-1, y), 0)
-
-    def get_loc(self):
-        return self.x, self.y
-
-    def report_loc(self):
-        print("report: position x:%d, y:%d" % (self.x, self.y))
-
-class GroundVehicle(Agent):
-
-    def __init__(self, loc):
-
-        Agent.__init__(self, loc)
-
-class AerialVehicle(Agent):
-
-    def __init__(self, loc):
-        Agent.__init__(self, loc)
-        self.step = UAV_STEP
-        self.range = UAV_RANGE
-        self.a_range = UAV_A_RANGE
-        self.air = True
-
-class GrayAgent(GroundVehicle):
-
-    def __init__(self, loc):
-        Agent.__init__(self, loc, GRAY)
-        self.direction = [0, 0]
-        self.isDone = False
-        # ! not used for now
-
-#    def move():
-#        if not self.isDone:
-#            self.l
-#
-#    def check_complete(self):
-#        return self.isDone
 
 #Different environment sizes
 class CapEnvGenerate20x20(CapEnv):
