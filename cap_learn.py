@@ -17,7 +17,7 @@ while not done:
     t += 1
     # if not t % 100:
         # print(t, info)
-    time.sleep(.5)
+    time.sleep(.25)
     print(reward)
     if t == 100000:
         break

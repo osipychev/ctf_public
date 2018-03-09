@@ -32,3 +32,8 @@ reset function performed right after init and does the same job twice. can we ju
     training file intermediate feedback
 
 3. Conda env cleanup
+
+X Red team can't win
+X ugv bug disappearing bug
+X don't let uavs go on flags
+X game end on other team dead bug
