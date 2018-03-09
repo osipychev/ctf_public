@@ -4,13 +4,13 @@ import numpy as np
 #from .cap_view2d import CaptureView2D
 from .const import *
 #from .create_map import CreateMap
-#from .enemy_ai import EnemyAI
+from .enemy_ai import EnemyAI
 
 class Agent():
     """This is a parent class for all agents.
     It creates an instance of agent in specific location"""
 
-    def __init__(self, loc):
+    def __init__(self, loc, map_only):
         """
         Constructor
 
@@ -28,6 +28,7 @@ class Agent():
         self.range = UGV_RANGE
         self.a_range = UGV_A_RANGE
         self.air = False
+        self.ai = EnemyAI(map_only)
 
     def move(self, action):
         x, y = self.x, self.y
@@ -56,7 +57,7 @@ class Agent():
 class GroundVehicle(Agent):
     """This is a child class for ground agents. Inherited from Ageng class.
     It creates an instance of UGV in specific location"""
-    def __init__(self, loc):
+    def __init__(self, loc, map_only):
         """
         Constructor
 
@@ -65,12 +66,12 @@ class GroundVehicle(Agent):
         self    : object
             CapEnv object
         """
-        Agent.__init__(self, loc)
+        Agent.__init__(self, loc, map_only)
 
 class AerialVehicle(Agent):
     """This is a child class for aerial agents. Inherited from Ageng class.
     It creates an instance of UAV in specific location"""
-    def __init__(self, loc):
+    def __init__(self, loc, map_only):
         """
         Constructor
 
@@ -79,7 +80,7 @@ class AerialVehicle(Agent):
         self    : object
             CapEnv object
         """
-        Agent.__init__(self, loc)
+        Agent.__init__(self, loc, map_only)
         self.step = UAV_STEP
         self.range = UAV_RANGE
         self.a_range = UAV_A_RANGE
@@ -88,7 +89,7 @@ class AerialVehicle(Agent):
 class CivilAgent(GroundVehicle):
     """This is a child class for civil agents. Inherited from UGV class.
     It creates an instance of civil in specific location"""
-    def __init__(self, loc):
+    def __init__(self, loc, map_only):
         """
         Constructor
 
@@ -97,7 +98,7 @@ class CivilAgent(GroundVehicle):
         self    : object
             CapEnv object
         """
-        Agent.__init__(self, loc, GRAY)
+        Agent.__init__(self, loc, map_only)
         self.direction = [0, 0]
         self.isDone = False
         # ! not used for now
