@@ -13,7 +13,7 @@ import gym
 import gym_cap
 
 #HYPER PARAMETERS
-env_ver = "v1"
+env_ver = "v0"
 gamma = .99
 load_model = False
 model_path = './model'
@@ -24,7 +24,7 @@ class AC_network():
         with tf.variable_scope(scope):
             #Input and visual encoding layers
             self.inputs = tf.placeholder(shape=[None, s_size], dtype=tf.float32)
-            self.imageIn = tf.reshape(self.inputs, shape[-1, a_size**.5, a_size**.5, 1])
+            self.imageIn = tf.reshape(self.inputs, shape=[-1, int(s_size**.5), int(s_size**.5), 1])
             self.conv1 = slim.conv2d(activation_fn=tf.nn.elu, \
                                      inputs=self.imageIn, num_outputs=16, \
                                      kernel_size=[8, 8], stride=[4, 4], padding='VALID')
@@ -44,7 +44,7 @@ class AC_network():
             self.state_in = (c_in, h_in)
             rnn_in = tf.expand_dims(hidden, [0])
             step_size = tf.shape(self.imageIn)[:1]
-            state_in = tf.nn.rnn_cell.LSTMstateTuple(c_in, h_in)
+            state_in = tf.nn.rnn_cell.LSTMStateTuple(c_in, h_in)
             lstm_outputs, lstm_state = tf.nn.dynamic_rnn( \
                 lstm_cell, rnn_in, initial_state=state_in, sequence_length=step_size, \
                 time_major=False)
@@ -89,17 +89,15 @@ class AC_network():
 
 # Copies one set of variables to another.
 # Used to set worker network parameters to those of global network.
-#TODO
 def update_target_graph(from_scope,to_scope):
     from_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, from_scope)
     to_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, to_scope)
-
     op_holder = []
     for from_var, to_var in zip(from_vars, to_vars):
         op_holder.append(to_var.assign(from_var))
     return op_holder
 
-# Processes Doom screen image to produce cropped and resized image.
+# Processes cap screen image to produce cropped and resized image.
 def process_frame(frame):
     s = frame[10:-10, 30:-30]
     s = scipy.misc.imresize(s, [84, 84])
@@ -118,13 +116,47 @@ def normalized_columns_initializer(std=1.0):
         return tf.constant(out)
     return _initializer
 
+#Allows gifs to be saved of the training episode for use in Control Center
+def make_gif(images, fname, duration=2, true_image=False,salience=False,salIMGS=None):
+  import moviepy.editor as mpy
+
+  def make_frame(t):
+    try:
+      x = images[int(len(images)/duration*t)]
+    except:
+      x = images[-1]
+
+    if true_image:
+      return x.astype(np.uint8)
+    else:
+      return ((x+1)/2*255).astype(np.uint8)
+
+  def make_mask(t):
+    try:
+      x = salIMGS[int(len(salIMGS)/duration*t)]
+    except:
+      x = salIMGS[-1]
+    return x
+
+  clip = mpy.VideoClip(make_frame, duration=duration)
+  if salience == True:
+    mask = mpy.VideoClip(make_mask, ismask=True,duration= duration)
+    clipB = clip.set_mask(mask)
+    clipB = clip.set_opacity(0)
+    mask = mask.set_opacity(0.1)
+    mask.write_gif(fname, fps = len(images) / duration,verbose=False)
+    #clipB.write_gif(fname, fps = len(images) / duration,verbose=False)
+  else:
+    clip.write_gif(fname, fps = len(images) / duration,verbose=False)
+
+
 class Worker():
-    def __init__(self, game, name, s_size, a_size, trainer, saver, model_path):
+    def __init__(self, env_ver, name, s_size, a_size, trainer, model_path, global_episodes):
         self.name = "worker_" + str(name)
         self.number = name
         self.model_path = model_path
         self.trainer = trainer
-        self.global_episodes = 0
+        self.global_episodes = global_episodes
         self.increment = self.global_episodes.assign_add(1)
         self.episode_rewards = []
         self.episode_lengths = []
@@ -134,9 +166,14 @@ class Worker():
         self.local_AC = AC_network(s_size, a_size, self.name, trainer)
         self.update_local_ops = update_target_graph('global', self.name)
 
-        game.init()
-        self.actions = np.identity(a_size,dtype=bool).tolist()
-        self.env = game
+        if env_ver == "v0":
+            self.env = gym.make("cap-v0")
+        elif env_ver == "v1":
+            self.env = gym.make("cap-v1")
+        elif env_ver == "v2":
+            self.env = gym.make("cap-v2")
+
+        self.actions = np.identity(a_size, dtype=int).tolist()
 
     def train(self, rollout, sess, gamma, bootstrap_value):
         rollout = np.array(rollout)
@@ -173,7 +210,7 @@ class Worker():
             feed_dict=feed_dict)
         return v_l / len(rollout), p_l / len(rollout), e_l / len(rollout), g_n, v_n
 
-    def work(self, gamma, sess, coord, saver):
+    def work(self, gamma, sess, coord):
         episode_count = sess.run(self.global_episodes)
         total_steps = 0
         print ("Starting worker " + str(self.number))
@@ -193,7 +230,7 @@ class Worker():
                 s = process_frame(s)
                 rnn_state = self.local_AC.state_init
                 self.batch_rnn_state = rnn_state
-                while self.env.is_episode_finished() == False:
+                while not self.env.is_episode_finished():
                     #Take an action using probabilities from policy network output.
                     a_dist, v, rnn_state = sess.run([self.local_AC.policy, \
                         self.local_AC.value, self.local_AC.state_out], \
@@ -222,7 +259,7 @@ class Worker():
 
                     # If the episode hasn't ended, but the experience buffer is full, then we
                     # make an update step using that experience rollout.
-                    if len(episode_buffer) == 100 and d != True:
+                    if len(episode_buffer) == 100 and not d:
                         # Since we don't know what the true final return is, we "bootstrap" from our current
                         # value estimation.
                         v1 = sess.run(self.local_AC.value, \
@@ -275,6 +312,16 @@ class Worker():
                 episode_count += 1
 
 def main():
+    #TODO fix hardcoded bleeehhh
+    a_size = 30 #move six agents in any direction or hold position
+    if env_ver == "v0":
+        s_size = 20*20
+    elif env_ver == "v1":
+        s_size = 100*100
+    elif env_ver == "v2":
+        s_size = 500*500
+
+    done = False
     tf.reset_default_graph()
 
     if not os.path.exists(model_path):
@@ -285,11 +332,14 @@ def main():
         os.makedirs('./frames')
 
     with tf.device("/cpu:0"):
+        global_episodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
+        trainer = tf.train.AdamOptimizer(learning_rate=1e-4)
         master_network = AC_network(s_size, a_size, 'global', None) # Global network
         num_workers = multiprocessing.cpu_count()
         workers = []
         for i in range(num_workers):
-            workers.append(Worker(DoomGame(), i, s_size, a_size, trainer, saver, model_path))
+            workers.append(Worker(env_ver, i, s_size, a_size, trainer, model_path, global_episodes))
+        saver = tf.train.Saver(max_to_keep=5)
 
     with tf.Session() as sess:
         coord = tf.train.Coordinator()
@@ -299,42 +349,16 @@ def main():
             saver.restore(sess, cpkt.model_checkpoint_path)
         else:
             sess.run(tf.global_variables_initializer())
+            print(sess)
+            print(sess.run(global_episodes))
 
         worker_threads = []
         for worker in workers:
-            worker_work = lambda: worker.work(max_episode_length, gamma, master_network, sess, coord)
-            t = threading.Thread(target(worker_work))
+            worker_work = lambda: worker.work(gamma, sess, coord)
+            t = threading.Thread(target=(worker_work))
             t.start()
             worker_threads.append(t)
         coord.join(worker_threads)
-
-    if env_ver == "v0":
-        env = gym.make("cap-v0")
-        s_size = 20*20
-    elif env_ver == "v1":
-        env = gym.make("cap-v1")
-        s_size = 100*100
-    elif env_ver == "v2":
-        env = gym.make("cap-v2")
-        s_size = 500*500
-    action = env.action_space.sample()  # choose random action
-    a_size = len(action)
-    done = False
-    t = 0
-
-    while not done:
-        action = env.action_space.sample()  # choose random action
-        # action = [2, 2, 2, 2]
-        observation, reward, done, info = env.step(action)  # feedback from environment
-        #obs, obs2,  or env
-        env.render(mode="env")
-        t += 1
-        # if not t % 100:
-            # print(t, info)
-        time.sleep(.25)
-        print(reward)
-        if t == 100000:
-            break
 
 if __name__ == "__main__":
     start_time = time.time()
