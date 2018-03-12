@@ -116,6 +116,7 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
+
         #Always returns team1
         if team == BLUE:
             self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
@@ -455,7 +456,7 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="random"
+        mode="sandbox"
         #DEBUGGING
         # print(DataFrame(self._env))
         self.cur_step+=1
@@ -467,36 +468,36 @@ class CapEnv(gym.Env):
         # team2_actions = generate_actions()
 
         #Move team2
-#        if mode=="run_away":
-#            team2_actions = generate_run_actions()
-#        elif mode=="random":
-#            team2_actions = self.action_space.sample()
-#        elif mode=="defend":
-#            team2_actions = EnemyAI.patrol(self.team2)
-#        elif mode=="attack":
-#            team2_actions = self.action_space.sample()
-#        if mode=="sandbox":
-#            for i in range(len(self.team2)):
-#                locx, locy = self.team2[i].get_loc()
-#                if self.team2[i].atHome:
-#                    self._env[locy][locx] = TEAM2_BACKGROUND
-#                else:
-#                    self._env[locy][locx] = TEAM1_BACKGROUND
-#            self.team2=[]
-#        elif mode=="patrol":
-#            team2_actions = EnemyAI.patrol(self.team_home,self.observation_space2,self.team2)
-#        elif mode=="random":
-#            team2_actions = self.action_space.sample()  # choose random action
-#        for i in range(len(self.team2)):
-#            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
-        
-        team2_actions = []
-        for agent in self.team2:
-            team2_actions.append(agent.ai.patrol(agent, self.observation_space2 ,self.team2))
+        if mode=="run_away":
+            team2_actions = generate_run_actions()
+        elif mode=="random":
+            team2_actions = self.action_space.sample()
+        elif mode=="defend":
+            team2_actions = EnemyAI.patrol(self.team2)
+        elif mode=="attack":
+            team2_actions = self.action_space.sample()
+        elif mode=="sandbox":
+            for i in range(len(self.team2)):
+                locx, locy = self.team2[i].get_loc()
+                if self.team2[i].atHome:
+                    self._env[locy][locx] = TEAM2_BACKGROUND
+                else:
+                    self._env[locy][locx] = TEAM1_BACKGROUND
+            self.team2=[]
+        elif mode=="patrol":
+            team2_actions = []
+            for agent in self.team2:
+                team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
+        elif mode=="random":
+            team2_actions = self.action_space.sample()  # choose random action
 
         for i in range(len(self.team2)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
-        
+
+
+        for i in range(len(self.team2)):
+            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
+
         #Check for dead
         for i in range(len(self.team1)):
             if not self.team1[i].atHome or self.team1[i].air or not self.team1[i].isAlive:
