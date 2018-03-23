@@ -15,11 +15,12 @@ class CaptureView2D:
         self.clock = pygame.time.Clock()
 
         # to show the right and bottom border
-        #TODO making white screen flash
-        self.screen = pygame.display.set_mode(screen_size)
+        self.screen = None
         self.__screen_size = screen_size
 
     def update_env(self, env):
+        if self.screen == None:
+            self.screen = pygame.display.set_mode(self.__screen_size)
         tile_w = self.SCREEN_W/len(env)
         tile_h = self.SCREEN_H/len(env[0])
         map_h = len(env[0])
