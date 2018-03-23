@@ -7,6 +7,7 @@ BLUE = 50
 GRAY = 90
 NUM_BLUE = 4
 NUM_RED = 4
+#TODO red and blue uav
 NUM_UAV = 2
 NUM_GRAY = 10
 UAV_STEP = 3

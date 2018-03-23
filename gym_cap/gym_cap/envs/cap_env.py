@@ -61,8 +61,9 @@ class CapEnv(gym.Env):
 
         # print(DataFrame(self.team_home))
         # print(DataFrame(self._env))
-        self.action_space = spaces.Box(0, len(self.ACTION)-1,\
-                                       shape=(len(self.team1),), dtype=int)
+        # self.action_space = spaces.discrete(0, len(self.ACTION)-1,\
+                                       # shape=(len(self.team1),), dtype=int)
+        self.action_space = spaces.Discrete(len(self.ACTION)**(NUM_BLUE+NUM_UAV))
 
         self.create_observation_space(RED)
         self.create_observation_space(BLUE)
@@ -414,14 +415,13 @@ class CapEnv(gym.Env):
                             if self.team_home[locy][locx] == TEAM2_BACKGROUND:
                                 for i in range(len(self.team1)):
                                     enemy_locx, enemy_locy = self.team1[i].get_loc()
-                                    print(enemy_locx, enemy_locy, locx+x, locy+y)
+                                    # print(enemy_locx, enemy_locy, locx+x, locy+y)
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team1[i].isAlive = False
                                         self._env[locy][locx] = DEAD
                                         break
 
 
-    #TODO necessary?
     def _seed(self, seed=None):
         """
         todo docs still
@@ -460,8 +460,13 @@ class CapEnv(gym.Env):
         #DEBUGGING
         # print(DataFrame(self._env))
         self.cur_step+=1
-        for i in range(len(entities_action)):
-            self.move_entity(self.ACTION[entities_action[i]], i, 1)
+        move_list = []
+        for i in range(NUM_BLUE+NUM_UAV):
+            move_list.append(entities_action%5)
+            entities_action = int(entities_action/5)
+        # print(move_list)
+        for i in range(len(move_list)):
+            self.move_entity(self.ACTION[move_list[i]], i, 1)
 
         #TODO
         #Get team2 actions from heuristic function
