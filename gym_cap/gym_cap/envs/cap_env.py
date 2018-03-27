@@ -464,7 +464,6 @@ class CapEnv(gym.Env):
         for i in range(NUM_BLUE+NUM_UAV):
             move_list.append(entities_action%5)
             entities_action = int(entities_action/5)
-        # print(move_list)
         for i in range(len(move_list)):
             self.move_entity(self.ACTION[move_list[i]], i, 1)
 
@@ -572,19 +571,19 @@ class CapEnv(gym.Env):
         for row in range(len(self._env)):
             for col in range(len(self._env[0])):
                 if self._env[row][col] == TEAM1_UGV:
-                    cur_ent = GroundVehicle((col, row))
+                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
                     self.team1.append(cur_ent)
                     self.team_home[row][col] = TEAM1_BACKGROUND
                 elif self._env[row][col] == TEAM1_UAV:
-                    cur_ent = AerialVehicle((col, row))
+                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
                     self.team1.append(cur_ent)
                     self.team_home[row][col] = TEAM1_BACKGROUND
                 elif self._env[row][col] == TEAM2_UGV:
-                    cur_ent = GroundVehicle((col, row))
+                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
                 elif self._env[row][col] == TEAM2_UAV:
-                    cur_ent = AerialVehicle((col, row))
+                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
                     self.team2.append(cur_ent)
                     self.team_home[row][col] = TEAM2_BACKGROUND
 
