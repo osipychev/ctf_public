@@ -39,6 +39,28 @@ class CaptureView2D:
                     pygame.draw.rect(self.screen, cur_color, (col*tile_w, row*tile_h, tile_w, tile_h))
         pygame.display.update()
 
+    def human_move(env):
+        human_move_list = []
+        tile_w = self.SCREEN_W/len(env)
+        tile_h = self.SCREEN_H/len(env[0])
+        map_h = len(env[0])
+        map_w = len(env)
+        while len(human_move_list) < 6:
+            ev = pygame.event.get()
+
+            for event in ev:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    pos = pygame.mouse.get_pos()
+
+                    for row in range(map_h):
+                        for col in range(map_w):
+                            cur_color = COLOR_DICT[env[row][col]]
+                            if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+                                pygame.draw.ellipse(self.screen, cur_color, [col*tile_w, row*tile_h, tile_w, tile_h])
+                            else:
+                                pygame.draw.rect(self.screen, cur_color, (col*tile_w, row*tile_h, tile_w, tile_h))
+
+
 
     def quit_game(self):
         try:
