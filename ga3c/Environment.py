@@ -75,9 +75,7 @@ class Environment:
         self.frame_q.put(image)
 
     def get_num_actions(self):
-        # print(self.game.env.action_space)
-        return 6
-        # return len(self.game.env.action_space)
+        return self.game.env.action_space.n
 
     def reset(self):
         self.total_reward = 0
