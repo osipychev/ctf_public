@@ -53,5 +53,5 @@ COLOR_DICT = {UNKNOWN : (200, 200, 200),
               TEAM1_FLAG : (0, 255, 255),
               TEAM2_FLAG : (255, 255, 0),
               OBSTACLE : (120, 120, 120),
-              DEAD : (0, 0, 0)}
-
+              DEAD : (0, 0, 0),
+              SELECTED : (222, 177, 10)}
