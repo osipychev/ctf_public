@@ -106,6 +106,9 @@ class CapEnv(gym.Env):
         reward-=(.5/100)
         if self.game_won:
             reward+=1
+        if reward <= -1:
+            reward = -1
+            self.game_lost = True
         # if self.cur_step > 10000:
             # reward-=.5
         # else:
@@ -540,9 +543,11 @@ class CapEnv(gym.Env):
             reward = -1
             game_lost = True
 
-        self.create_observation_space(BLUE)
-        self.create_observation_space(RED)
-        self.state = self.observation_space
+        # self.create_observation_space(BLUE)
+        # self.create_observation_space(RED)
+        # self.state = self.observation_space
+        self.state = self._env
+        print(self.state)
 
         #TODO game over
         isDone = False

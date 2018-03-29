@@ -47,4 +47,4 @@ class GameManager:
 
     def _update_display(self):
         if self.display:
-            self.env.render()
+            self.env.render('env')
