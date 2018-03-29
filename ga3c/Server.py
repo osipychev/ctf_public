@@ -100,8 +100,11 @@ class Server:
         self.model.save(self.stats.episode_count.value)
 
     def main(self):
+        print("HERE1")
         self.stats.start()
+        print("HERE2")
         self.dynamic_adjustment.start()
+        print("HERE2")
 
         if Config.PLAY_MODE:
             for trainer in self.trainers:
@@ -111,6 +114,7 @@ class Server:
                                        Config.LEARNING_RATE_END - Config.LEARNING_RATE_START) / Config.ANNEALING_EPISODE_COUNT
         beta_multiplier = (Config.BETA_END - Config.BETA_START) / Config.ANNEALING_EPISODE_COUNT
 
+        print("HERE3")
         while self.stats.episode_count.value < Config.EPISODES:
             step = min(self.stats.episode_count.value, Config.ANNEALING_EPISODE_COUNT - 1)
             self.model.learning_rate = Config.LEARNING_RATE_START + learning_rate_multiplier * step
@@ -123,6 +127,7 @@ class Server:
 
             time.sleep(0.01)
 
+        print("HERE4")
         self.dynamic_adjustment.exit_flag = True
         while self.agents:
             self.remove_agent()

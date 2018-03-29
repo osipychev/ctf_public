@@ -79,8 +79,8 @@ class Config:
 
     # Input of the DNN
     STACKED_FRAMES = 4
-    IMAGE_WIDTH = 84
-    IMAGE_HEIGHT = 84
+    IMAGE_WIDTH = 20
+    IMAGE_HEIGHT = 20
 
     # Total number of episodes and annealing frequency
     EPISODES = 400000
