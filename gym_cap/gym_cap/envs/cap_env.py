@@ -87,10 +87,10 @@ class CapEnv(gym.Env):
         """
         reward = 0
         #Win and loss return max rewards
-        if self.game_lost:
-            return -1
-        if self.game_won:
-            return 1
+        # if self.game_lost:
+            # return -1
+        # if self.game_won:
+            # return 1
 
         #Dead enemy team gives .5/total units for each dead unit
         for i in self.team2:
@@ -101,10 +101,15 @@ class CapEnv(gym.Env):
                 reward-=(.5/len(self.team1))
 
         #10,000 steps returns -.5
-        if self.cur_step > 10000:
-            reward-=.5
-        else:
-            reward-=((self.cur_step/10000.0)*.5)
+        # map_size_2 = map_size[0]*map_size[1]
+        # reward-=(.5/map_size_2)
+        reward-=(.5/10000)
+        if self.game_won:
+            reward+=1
+        # if self.cur_step > 10000:
+            # reward-=.5
+        # else:
+            # reward-=((self.cur_step/10000.0)*.5)
 
         return reward
 
@@ -531,6 +536,8 @@ class CapEnv(gym.Env):
             self.game_lost = True
 
         reward = self.create_reward()
+        if reward == -1:
+            game_lost = True
 
         self.create_observation_space(BLUE)
         self.create_observation_space(RED)
@@ -563,6 +570,7 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
+
         self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=in_seed)
         self.team_home = self._env.copy()
 
