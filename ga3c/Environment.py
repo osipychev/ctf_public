@@ -72,8 +72,8 @@ class Environment:
     def _update_frame_q(self, frame):
         if self.frame_q.full():
             self.frame_q.get()
-        image = Environment._preprocess(frame)
-        self.frame_q.put(image)
+        # image = Environment._preprocess(frame)
+        self.frame_q.put(frame)
 
     def get_num_actions(self):
         return self.game.env.action_space.n
