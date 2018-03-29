@@ -35,12 +35,16 @@ import gym
 from Config import Config
 from Server import Server
 
-# Parse arguments
+print("HEREEE")
+# if __name__ == '__main__':
+# Parse argument
+print("HERE0")
 for i in range(1, len(sys.argv)):
     # Config arguments should be in format of Config=Value
     # For setting booleans to False use Config=
     x, y = sys.argv[i].split('=')
     setattr(Config, x, type(getattr(Config, x))(y))
+print("HERE01")
 
 # Adjust configs for Play mode
 if Config.PLAY_MODE:
@@ -52,6 +56,7 @@ if Config.PLAY_MODE:
     Config.LOAD_CHECKPOINT = True
     Config.TRAIN_MODELS = False
     Config.SAVE_MODELS = False
+print("HERE02")
 
 gym.undo_logger_setup()
 

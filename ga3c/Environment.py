@@ -55,8 +55,9 @@ class Environment:
 
     @staticmethod
     def _preprocess(image):
-        image = Environment._rgb2gray(image)
-        image = [image]
+        # print(image)
+        # image = Environment._rgb2gray(image)
+        # print(image)
         image = misc.imresize(image, [Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH], 'bilinear')
         image = image.astype(np.float32) / 128.0 - 1.0
         return image
@@ -80,7 +81,8 @@ class Environment:
     def reset(self):
         self.total_reward = 0
         self.frame_q.queue.clear()
-        self._update_frame_q(self.game.reset())
+        frame = self.game.reset()
+        self._update_frame_q(frame)
         self.previous_state = self.current_state = None
 
     def step(self, action):
