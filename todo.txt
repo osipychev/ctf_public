@@ -37,3 +37,8 @@ X Red team can't win
 X ugv bug disappearing bug
 X don't let uavs go on flags
 X game end on other team dead bug
+
+
+ISSUES
+______
+1. Random seed creates random environment for each agent
