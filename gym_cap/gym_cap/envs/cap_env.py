@@ -68,7 +68,7 @@ class CapEnv(gym.Env):
         self.create_observation_space(RED)
         self.create_observation_space(BLUE)
         self.state = self.observation_space
-        self.cap_view = CaptureView2D(screen_size=(1000, 1000))
+        self.cap_view = CaptureView2D(screen_size=(800, 800))
         self.game_lost = False
         self.game_won = False
         self.cur_step = 0
@@ -547,7 +547,6 @@ class CapEnv(gym.Env):
         # self.create_observation_space(RED)
         # self.state = self.observation_space
         self.state = self._env
-        print(self.state)
 
         #TODO game over
         isDone = False
@@ -577,7 +576,7 @@ class CapEnv(gym.Env):
             CapEnv object
         """
 
-        self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=in_seed)
+        self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=1)
         self.team_home = self._env.copy()
 
         self.team1 = []
@@ -609,7 +608,7 @@ class CapEnv(gym.Env):
 
         return self.state
 
-    def _render(self, mode="obs", close=False):
+    def _render(self, mode="env", close=False):
         """
         Renders the screen options="obs, env"
 
