@@ -69,6 +69,7 @@ class CapEnv(gym.Env):
         self.create_observation_space(BLUE)
         self.state = self.observation_space
         self.cap_view = CaptureView2D(screen_size=(800, 800))
+        self.viewer = None
         self.game_lost = False
         self.game_won = False
         self.cur_step = 0
@@ -608,10 +609,52 @@ class CapEnv(gym.Env):
 
         return self.state
 
-    def _render(self, mode="env", close=False):
+    def render(self, mode="human"):
         """
         Renders the screen options="obs, env"
 
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        mode    : string
+            Defines what will be rendered
+        """
+        SCREEN_W = 800
+        SCREEN_H = 800
+        env = self._env
+        print(self._env)
+        
+        from gym.envs.classic_control import rendering
+        if self.viewer is None:
+            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+
+        tile_w = SCREEN_W/len(env)
+        tile_h = SCREEN_H/len(env[0])
+        map_h = len(env[0])
+        map_w = len(env)
+        
+        self.viewer.draw_polygon([(0,0),(SCREEN_W,0),(SCREEN_W,SCREEN_H),(0,SCREEN_H)], color=(0,0,0))
+        
+        for row in range(map_h):
+            for col in range(map_w):
+                cur_color = np.divide(COLOR_DICT[env[row][col]],255)
+                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+                    self.viewer.draw_circle(tile_w/2, 20, color=cur_color).add_attr([col*tile_w, row*tile_h])
+                else:
+                    self.viewer.draw_polygon([
+                            (col*tile_w, row*tile_h),
+                            (col*tile_w+tile_w, row*tile_h),
+                            (col*tile_w+tile_w, row*tile_h+ tile_h),
+                            (col*tile_w, row*tile_h+ tile_h)], color=cur_color)
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+        #print(self._env)
+
+    def _render(self, mode="obs", close=False):
+        """
+        Renders the screen options="obs, env"
         Parameters
         ----------
         self    : object
@@ -630,7 +673,11 @@ class CapEnv(gym.Env):
         elif mode=="team":
             self.cap_view.update_env(self.team_home)
         return
-
+        
+    def close(self):
+        if self.viewer is not None:
+            self.viewer.close()
+            self.viewer = None
 
 
 #Different environment sizes
