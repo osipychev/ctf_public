@@ -46,6 +46,6 @@ class GameManager:
         return observation, reward, done, info
 
     def _update_display(self):
-        print("here", self.display)
         if self.display:
+            print("here", self.display)
             self.env.render('env')

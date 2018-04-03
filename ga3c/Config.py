@@ -126,7 +126,7 @@ class Config:
     # Print stats every PRINT_STATS_FREQUENCY episodes
     PRINT_STATS_FREQUENCY = 1
     # The window to average stats
-    STAT_ROLLING_MEAN_WINDOW = 1000
+    STAT_ROLLING_MEAN_WINDOW = 100
 
     # Results filename
     RESULTS_FILENAME = 'results.txt'
