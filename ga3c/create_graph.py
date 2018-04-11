@@ -41,7 +41,8 @@ def main():
     new_x, new_y = list(zip(*lists))
     lists = sorted(zip(*[x, z]))
     new_x, new_z = list(zip(*lists))
-    plt.figure(1)                # a second figure
+
+    plt.figure(1)                # a first figure
     plt.plot(new_x, new_y)
     plt.xlabel('Time')
     plt.ylabel('Reward (int)')
@@ -50,6 +51,12 @@ def main():
     plt.plot(new_x, new_z)
     plt.xlabel('Time')
     plt.ylabel('Episode Length')
+
+    plt.figure(3)                # a third figure
+    plt.plot(new_x, new_y)
+    plt.ylim([-1, 1])
+    plt.xlabel('Time')
+    plt.ylabel('Reward (scaled)')
     plt.show()
 
 if __name__ == '__main__':
