@@ -72,6 +72,9 @@ class CapEnv(gym.Env):
         self.game_won = False
         self.cur_step = 0
 
+        #Necessary for human mode
+        self.first = True
+
         #TODO necessary?
         self._seed()
 
@@ -434,7 +437,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action):
+    def _step(self, entities_action, mode="sandbox"):
         """
         Takes one step in the cap the flag game
 
@@ -456,7 +459,6 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="sandbox"
         #DEBUGGING
         # print(DataFrame(self._env))
         self.cur_step+=1
@@ -490,10 +492,13 @@ class CapEnv(gym.Env):
                 team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
         elif mode=="random":
             team2_actions = self.action_space.sample()  # choose random action
-
-        for i in range(len(self.team2)):
-            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
-
+        elif mode=="human":
+            self._render("env")
+            # if self.first:
+                # team2_actions = [0]*(NUM_BLUE+NUM_UAV)
+                # self.first = False
+            # else:
+            team2_actions = self.cap_view.human_move(self._env)
 
         for i in range(len(self.team2)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
