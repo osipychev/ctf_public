@@ -43,6 +43,7 @@ TEAM2_FLAG = 7
 OBSTACLE = 8
 DEAD = 9
 SELECTED = 10
+COMPLETED = 11
 
 COLOR_DICT = {UNKNOWN : (200, 200, 200),
               TEAM1_BACKGROUND : (0, 0, 120),
@@ -55,4 +56,5 @@ COLOR_DICT = {UNKNOWN : (200, 200, 200),
               TEAM2_FLAG : (255, 255, 0),
               OBSTACLE : (120, 120, 120),
               DEAD : (0, 0, 0),
-              SELECTED : (222, 177, 10)}
+              SELECTED : (122, 77, 25),
+              COMPLETED : (100, 0, 0)}

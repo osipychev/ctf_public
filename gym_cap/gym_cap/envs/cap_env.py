@@ -67,7 +67,7 @@ class CapEnv(gym.Env):
         self.create_observation_space(RED)
         self.create_observation_space(BLUE)
         self.state = self.observation_space
-        self.cap_view = CaptureView2D(screen_size=(1000, 1000))
+        self.cap_view = CaptureView2D()
         self.game_lost = False
         self.game_won = False
         self.cur_step = 0
@@ -494,11 +494,7 @@ class CapEnv(gym.Env):
             team2_actions = self.action_space.sample()  # choose random action
         elif mode=="human":
             self._render("env")
-            # if self.first:
-                # team2_actions = [0]*(NUM_BLUE+NUM_UAV)
-                # self.first = False
-            # else:
-            team2_actions = self.cap_view.human_move(self._env)
+            team2_actions = self.cap_view.human_move(self._env, self.team2)
 
         for i in range(len(self.team2)):
             self.move_entity(self.ACTION[team2_actions[i]], i, 2)
