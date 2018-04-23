@@ -26,6 +26,7 @@
 
 import gym
 import gym_cap
+from pandas import *
 
 
 class GameManager:
@@ -41,11 +42,13 @@ class GameManager:
         return observation
 
     def step(self, action):
+        # print(DataFrame(self.env._env))
         self._update_display()
         observation, reward, done, info = self.env.step(action)
         return observation, reward, done, info
 
     def _update_display(self):
         if self.display:
-            print("here", self.display)
-            self.env.render('env')
+            # self.env.render('env')
+            print(DataFrame(self.env._env))
+

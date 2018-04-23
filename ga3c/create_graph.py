@@ -27,13 +27,13 @@ def main():
             time = temp[0].split()
             score = temp[1][1:]
             length = temp[2][1:]
-            if start_time == None:
-                start_time = time[1].split(':')
-                time_diff = 0
-            else:
-                time_diff = time_passed(start_time, time[1])
-            x.append(time_diff)
-            y.append(int(score))
+            # if start_time == None:
+                # start_time = time[1].split(':')
+                # time_diff = 0
+            # else:
+                # time_diff = time_passed(start_time, time[1])
+            x.append(w)
+            y.append(float(score))
             z.append(int(length))
             w+=1
 
