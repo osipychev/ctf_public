@@ -70,6 +70,9 @@ class CapEnv(gym.Env):
         self.game_won = False
         self.cur_step = 0
 
+        #Necessary for human mode
+        self.first = True
+
         self._seed()
 
     def create_reward(self):
@@ -187,7 +190,6 @@ class CapEnv(gym.Env):
                             if self.team_home[locy][locx] == TEAM2_BACKGROUND:
                                 for i in range(len(self.team1)):
                                     enemy_locx, enemy_locy = self.team1[i].get_loc()
-                                    print(enemy_locx, enemy_locy, locx+x, locy+y)
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team1[i].isAlive = False
                                         self._env[locy][locx] = DEAD
@@ -207,7 +209,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action):
+    def _step(self, entities_action, mode="sandbox"):
         """
         Takes one step in the cap the flag game
 
@@ -261,9 +263,12 @@ class CapEnv(gym.Env):
                 team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
         elif mode=="random":
             team2_actions = self.action_space.sample()  # choose random action
+        elif mode=="human":
+            self._render("env")
+            team2_actions = self.cap_view.human_move(self._env, self.team2)
 
         for i in range(len(self.team2)):
-            self.team2[i].move(self.ACTION[entities_action[i]], self._env, self.team_home)
+            self.team2[i].move(self.ACTION[team2_actions[i]], self._env, self.team_home)
 
         #Check for dead
         for i in range(len(self.team1)):
@@ -299,7 +304,6 @@ class CapEnv(gym.Env):
             self.game_lost = True
             self.game_won = False
 
-
         reward = self.create_reward()
 
         self.create_observation_space(BLUE)
@@ -315,7 +319,6 @@ class CapEnv(gym.Env):
             print("YOU'RE A WINNER!")
         if self.game_lost:
             print("YOU'RE A LOSER!")
-
 
         return self.state, reward, isDone, info
 
