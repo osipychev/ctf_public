@@ -93,11 +93,14 @@ class ProcessAgent(Process):
         while not done:
             # very first few frames
             if self.env.current_state is None:
-                self.env.step(0)  # 0 == NOOP
+                self.env.step(4)  # 4 == NOOP
                 continue
 
             prediction, value = self.predict(self.env.current_state)
+            # prediction[4]-=.1
+            print(prediction)
             action = self.select_action(prediction)
+            print("ProcessAgent.py, action =", action)
             reward, done = self.env.step(action)
             reward_sum += reward
             exp = Experience(self.env.previous_state, action, prediction, reward, done)

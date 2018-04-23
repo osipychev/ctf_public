@@ -46,7 +46,7 @@ class Server:
         self.prediction_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
 
         self.model = NetworkVP(Config.DEVICE, Config.NETWORK_NAME, Environment().get_num_actions())
-        print(Environment().get_num_actions())
+        print("Server.py, num_actions =", Environment().get_num_actions())
         if Config.LOAD_CHECKPOINT:
             self.stats.episode_count.value = self.model.load()
 

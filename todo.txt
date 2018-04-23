@@ -42,3 +42,6 @@ X game end on other team dead bug
 ISSUES
 ______
 1. Random seed creates random environment for each agent
+
+Base graphs on individual episodes
+truncates results
