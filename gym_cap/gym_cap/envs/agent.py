@@ -30,23 +30,79 @@ class Agent():
         self.air = False
         self.ai = EnemyAI(map_only)
 
-    def move(self, action):
-        x, y = self.x, self.y
+    def move(self, action, env, team_home):
+        """
+        Moves each unit individually. Checks if action is valid first.
+
+        Parameters
+        ----------
+        self        : object
+            CapEnv object
+        action      : string
+            Action the unit is to take
+        env         : list
+            the environment to move units in
+        team_home   : list
+            easily place the correct home tiles
+        """
+        if not self.isAlive:
+            return
         if action == "X":
             pass
-        elif action == "W":
-            x -= self.step
-        elif action == "E":
-            x += self.step
         elif action == "N":
-            y -= self.step
+            if self.y-unit_step >= 0 \
+                    and env[self.y-unit_step][self.x]!=OBSTACLE \
+                    and env[self.y-unit_step][self.x]!=TEAM1_UGV \
+                    and env[self.y-unit_step][self.x]!=TEAM2_UGV \
+                    and env[self.y-unit_step][self.x]!=TEAM1_UAV \
+                    and env[self.y-unit_step][self.x]!=TEAM2_UAV:
+                env[self.y][self.x] = self.team_home[self.y][self.x]
+                self.y-=unit_step
+                if self.air:
+                    env[self.y][self.x] = TEAM1_UAV
+                else:
+                    env[self.y][self.x] = TEAM1_UGV
         elif action == "S":
-            y += self.step
+            if self.y+unit_step < self.map_size[1] \
+                    and env[self.y+unit_step][self.x]!=OBSTACLE \
+                    and env[self.y+unit_step][self.x]!=TEAM1_UGV \
+                    and env[self.y+unit_step][self.x]!=TEAM2_UGV \
+                    and env[self.y+unit_step][self.x]!=TEAM1_UAV \
+                    and env[self.y+unit_step][self.x]!=TEAM2_UAV:
+                env[self.y][self.x] = self.team_home[self.y][self.x]
+                self.y+=unit_step
+                if self.air:
+                    env[self.y][self.x] = TEAM1_UAV
+                else:
+                    env[self.y][self.x] = TEAM1_UGV
+        elif action == "E":
+            if self.x+unit_step < self.map_size[0] \
+                    and env[self.y][self.x+unit_step]!=OBSTACLE \
+                    and env[self.y][self.x+unit_step]!=TEAM1_UGV \
+                    and env[self.y][self.x+unit_step]!=TEAM2_UGV \
+                    and env[self.y][self.x+unit_step]!=TEAM1_UAV \
+                    and env[self.y][self.x+unit_step]!=TEAM2_UAV:
+                env[self.y][self.x] = self.team_home[self.y][self.x]
+                self.x+=unit_step
+                if self.air:
+                    env[self.y][self.x] = TEAM1_UAV
+                else:
+                    env[self.y][self.x] = TEAM1_UGV
+        elif action == "W":
+            if self.x-unit_step >= 0 \
+                    and env[self.y][self.x-unit_step]!=OBSTACLE \
+                    and env[self.y][self.x-unit_step]!=TEAM1_UGV \
+                    and env[self.y][self.x-unit_step]!=TEAM2_UGV \
+                    and env[self.y][self.x-unit_step]!=TEAM1_UAV \
+                    and env[self.y][self.x-unit_step]!=TEAM2_UAV:
+                env[self.y][self.x] = self.team_home[self.y][self.x]
+                self.x-=unit_step
+                if self.air:
+                    env[self.y][self.x] = TEAM1_UAV
+                else:
+                    env[self.y][self.x] = TEAM1_UGV
         else:
             print("error: wrong action selected")
-
-        self.x = x#max(min(WORLD_W-1, x), 0)
-        self.y = y#max(min(WORLD_H-1, y), 0)
 
     def get_loc(self):
         return self.x, self.y
