@@ -42,7 +42,7 @@ class CaptureView2D:
 
     def human_move(self, env, team2):
         moves_recorded = 0
-        human_move_list = [5]*(NUM_BLUE+NUM_UAV)
+        human_move_list = [4]*(NUM_BLUE+NUM_UAV)
         tile_w = self.SCREEN_W/len(env)
         tile_h = self.SCREEN_H/len(env[0])
         map_h = len(env[0])
@@ -130,6 +130,7 @@ class CaptureView2D:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     pygame.display.update()
+        print(human_move_list)
         return human_move_list
 
 
