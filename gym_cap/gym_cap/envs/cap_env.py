@@ -59,7 +59,6 @@ class CapEnv(gym.Env):
                     self.team2.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
 
-        print(DataFrame(self._env))
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
@@ -231,8 +230,8 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="random"
-        print(DataFrame(self._env))
+        mode="human"
+        # print(DataFrame(self._env))
         self.cur_step+=1
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[entities_action[i]], self._env, self.team_home)
