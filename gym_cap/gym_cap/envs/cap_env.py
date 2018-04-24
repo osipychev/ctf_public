@@ -35,30 +35,31 @@ class CapEnv(gym.Env):
         """
 
         self._env = CreateMap.gen_map('map', map_size)
-        self.map_size = (len(self._env[0]), len(self._env))
+        self.map_size = (len(self._env), len(self._env[0]))
         self.team_home = self._env.copy()
 
         self.team1 = []
         self.team2 = []
-        for row in range(len(self._env)):
-            for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_UGV:
-                    cur_ent = GroundVehicle((col, row), self.team_home, 1)
+        for x in range(len(self._env)):
+            for y in range(len(self._env[0])):
+                if self._env[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM1_UAV:
-                    cur_ent = AerialVehicle((col, row), self.team_home, 1)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_UGV:
-                    cur_ent = GroundVehicle((col, row), self.team_home, 2)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
-                elif self._env[row][col] == TEAM2_UAV:
-                    cur_ent = AerialVehicle((col, row), self.team_home, 2)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+                elif self._env[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
+                    self.team_home[x][y] = TEAM2_BACKGROUND
 
+        print(DataFrame(self._env))
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
@@ -117,7 +118,6 @@ class CapEnv(gym.Env):
             CapEnv object
         """
 
-        #Always returns team1
         if team == BLUE:
             self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team1:
@@ -130,7 +130,7 @@ class CapEnv(gym.Env):
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space[locy][locx] = self._env[locy][locx]
+                            self.observation_space[locx][locy] = self._env[locx][locy]
         elif team == RED:
             self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team2:
@@ -143,7 +143,7 @@ class CapEnv(gym.Env):
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space2[locy][locx] = self._env[locy][locx]
+                            self.observation_space2[locx][locy] = self._env[locx][locy]
 
     #TODO improve
     #Change from range to attack range
@@ -169,13 +169,13 @@ class CapEnv(gym.Env):
                     if (x*x + y*y <= cur_range**2) and \
                         not (locx < 0 or locx > self.map_size[0]-1) and \
                         not (locy < 0 or locy > self.map_size[1]-1):
-                        if self._env[locy][locx] == TEAM2_UGV:
-                            if self.team_home[locy][locx] == TEAM1_BACKGROUND:
+                        if self._env[locx][locy] == TEAM2_UGV:
+                            if self.team_home[locx][locy] == TEAM1_BACKGROUND:
                                 for i in range(len(self.team2)):
                                     enemy_locx, enemy_locy = self.team2[i].get_loc()
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team2[i].isAlive = False
-                                        self._env[locy][locx] = DEAD
+                                        self._env[locx][locy] = DEAD
                                         break
         elif team == 2:
             loc = self.team2[entity_num].get_loc()
@@ -186,13 +186,13 @@ class CapEnv(gym.Env):
                     if (x*x + y*y <= cur_range**2) and \
                         not (locx < 0 or locx > self.map_size[0]-1) and \
                         not (locy < 0 or locy > self.map_size[1]-1):
-                        if self._env[locy][locx] == TEAM1_UGV:
-                            if self.team_home[locy][locx] == TEAM2_BACKGROUND:
+                        if self._env[locx][locy] == TEAM1_UGV:
+                            if self.team_home[locx][locy] == TEAM2_BACKGROUND:
                                 for i in range(len(self.team1)):
                                     enemy_locx, enemy_locy = self.team1[i].get_loc()
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team1[i].isAlive = False
-                                        self._env[locy][locx] = DEAD
+                                        self._env[locx][locy] = DEAD
                                         break
 
 
@@ -232,6 +232,7 @@ class CapEnv(gym.Env):
             Not sure TODO
         """
         mode="random"
+        print(DataFrame(self._env))
         self.cur_step+=1
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[entities_action[i]], self._env, self.team_home)
@@ -253,9 +254,9 @@ class CapEnv(gym.Env):
             for i in range(len(self.team2)):
                 locx, locy = self.team2[i].get_loc()
                 if self.team2[i].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
+                    self._env[locx][locy] = TEAM2_BACKGROUND
                 else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
+                    self._env[locx][locy] = TEAM1_BACKGROUND
             self.team2=[]
         elif mode=="patrol":
             team2_actions = []
@@ -341,24 +342,24 @@ class CapEnv(gym.Env):
 
         self.team1 = []
         self.team2 = []
-        for row in range(len(self._env)):
-            for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_UGV:
-                    cur_ent = GroundVehicle((col, row), self.team_home, 1)
+        for y in range(len(self._env)):
+            for x in range(len(self._env[0])):
+                if self._env[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM1_UAV:
-                    cur_ent = AerialVehicle((col, row), self.team_home, 1)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_UGV:
-                    cur_ent = GroundVehicle((col, row), self.team_home, 2)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
-                elif self._env[row][col] == TEAM2_UAV:
-                    cur_ent = AerialVehicle((col, row), self.team_home, 2)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+                elif self._env[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
+                    self.team_home[x][y] = TEAM2_BACKGROUND
 
         self.create_observation_space()
         self.state = self.observation_space
