@@ -52,80 +52,80 @@ class Agent():
             pass
         elif action == "N":
             if self.y-self.step >= 0 \
-                    and env[self.y-self.step][self.x]!=OBSTACLE \
-                    and env[self.y-self.step][self.x]!=TEAM1_UGV \
-                    and env[self.y-self.step][self.x]!=TEAM2_UGV \
-                    and env[self.y-self.step][self.x]!=TEAM1_UAV \
-                    and env[self.y-self.step][self.x]!=TEAM2_UAV:
-                env[self.y][self.x] = team_home[self.y][self.x]
+                    and env[self.x][self.y-self.step]!=OBSTACLE \
+                    and env[self.x][self.y-self.step]!=TEAM1_UGV \
+                    and env[self.x][self.y-self.step]!=TEAM2_UGV \
+                    and env[self.x][self.y-self.step]!=TEAM1_UAV \
+                    and env[self.x][self.y-self.step]!=TEAM2_UAV:
+                env[self.x][self.y] = team_home[self.x][self.y]
                 self.y-=self.step
                 if self.team == 1:
                     if self.air:
-                        env[self.y][self.x] = TEAM1_UAV
+                        env[self.x][self.y] = TEAM1_UAV
                     else:
-                        env[self.y][self.x] = TEAM1_UGV
+                        env[self.x][self.y] = TEAM1_UGV
                 else:
                     if self.air:
-                        env[self.y][self.x] = TEAM2_UAV
+                        env[self.x][self.y] = TEAM2_UAV
                     else:
-                        env[self.y][self.x] = TEAM2_UGV
+                        env[self.x][self.y] = TEAM2_UGV
         elif action == "S":
             if self.y+self.step < len(env[0]) \
-                    and env[self.y+self.step][self.x]!=OBSTACLE \
-                    and env[self.y+self.step][self.x]!=TEAM1_UGV \
-                    and env[self.y+self.step][self.x]!=TEAM2_UGV \
-                    and env[self.y+self.step][self.x]!=TEAM1_UAV \
-                    and env[self.y+self.step][self.x]!=TEAM2_UAV:
-                env[self.y][self.x] = team_home[self.y][self.x]
+                    and env[self.x][self.y+self.step]!=OBSTACLE \
+                    and env[self.x][self.y+self.step]!=TEAM1_UGV \
+                    and env[self.x][self.y+self.step]!=TEAM2_UGV \
+                    and env[self.x][self.y+self.step]!=TEAM1_UAV \
+                    and env[self.x][self.y+self.step]!=TEAM2_UAV:
+                env[self.x][self.y] = team_home[self.x][self.y]
                 self.y+=self.step
                 if self.team == 1:
                     if self.air:
-                        env[self.y][self.x] = TEAM1_UAV
+                        env[self.x][self.y] = TEAM1_UAV
                     else:
-                        env[self.y][self.x] = TEAM1_UGV
+                        env[self.x][self.y] = TEAM1_UGV
                 else:
                     if self.air:
-                        env[self.y][self.x] = TEAM2_UAV
+                        env[self.x][self.y] = TEAM2_UAV
                     else:
-                        env[self.y][self.x] = TEAM2_UGV
+                        env[self.x][self.y] = TEAM2_UGV
         elif action == "E":
             if self.x+self.step < len(env) \
-                    and env[self.y][self.x+self.step]!=OBSTACLE \
-                    and env[self.y][self.x+self.step]!=TEAM1_UGV \
-                    and env[self.y][self.x+self.step]!=TEAM2_UGV \
-                    and env[self.y][self.x+self.step]!=TEAM1_UAV \
-                    and env[self.y][self.x+self.step]!=TEAM2_UAV:
-                env[self.y][self.x] = team_home[self.y][self.x]
+                    and env[self.x+self.step][self.y]!=OBSTACLE \
+                    and env[self.x+self.step][self.y]!=TEAM1_UGV \
+                    and env[self.x+self.step][self.y]!=TEAM2_UGV \
+                    and env[self.x+self.step][self.y]!=TEAM1_UAV \
+                    and env[self.x+self.step][self.y]!=TEAM2_UAV:
+                env[self.x][self.y] = team_home[self.x][self.y]
                 self.x+=self.step
                 if self.team == 1:
                     if self.air:
-                        env[self.y][self.x] = TEAM1_UAV
+                        env[self.x][self.y] = TEAM1_UAV
                     else:
-                        env[self.y][self.x] = TEAM1_UGV
+                        env[self.x][self.y] = TEAM1_UGV
                 else:
                     if self.air:
-                        env[self.y][self.x] = TEAM2_UAV
+                        env[self.x][self.y] = TEAM2_UAV
                     else:
-                        env[self.y][self.x] = TEAM2_UGV
+                        env[self.x][self.y] = TEAM2_UGV
         elif action == "W":
             if self.x-self.step >= 0 \
-                    and env[self.y][self.x-self.step]!=OBSTACLE \
-                    and env[self.y][self.x-self.step]!=TEAM1_UGV \
-                    and env[self.y][self.x-self.step]!=TEAM2_UGV \
-                    and env[self.y][self.x-self.step]!=TEAM1_UAV \
-                    and env[self.y][self.x-self.step]!=TEAM2_UAV:
-                env[self.y][self.x] = team_home[self.y][self.x]
+                    and env[self.x-self.step][self.y]!=OBSTACLE \
+                    and env[self.x-self.step][self.y]!=TEAM1_UGV \
+                    and env[self.x-self.step][self.y]!=TEAM2_UGV \
+                    and env[self.x-self.step][self.y]!=TEAM1_UAV \
+                    and env[self.x-self.step][self.y]!=TEAM2_UAV:
+                env[self.x][self.y] = team_home[self.x][self.y]
                 self.x-=self.step
                 if self.team == 1:
                     if self.air:
-                        env[self.y][self.x] = TEAM1_UAV
+                        env[self.x][self.y] = TEAM1_UAV
                     else:
-                        env[self.y][self.x] = TEAM1_UGV
+                        env[self.x][self.y] = TEAM1_UGV
                 else:
                     if self.air:
-                        env[self.y][self.x] = TEAM2_UAV
+                        env[self.x][self.y] = TEAM2_UAV
                     else:
-                        env[self.y][self.x] = TEAM2_UGV
+                        env[self.x][self.y] = TEAM2_UGV
         else:
             print("error: wrong action selected")
 
