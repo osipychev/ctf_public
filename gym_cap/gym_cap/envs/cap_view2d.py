@@ -35,9 +35,9 @@ class CaptureView2D:
             for y in range(map_h):
                 cur_color = COLOR_DICT[env[x][y]]
                 if env[x][y] == TEAM1_UAV or env[x][y] == TEAM2_UAV:
-                    pygame.draw.ellipse(self.screen, cur_color, [y*tile_h, x*tile_w, tile_h, tile_w])
+                    pygame.draw.ellipse(self.screen, cur_color, [x*tile_w, y*tile_h, tile_w, tile_h])
                 else:
-                    pygame.draw.rect(self.screen, cur_color, (y*tile_h, x*tile_w, tile_h, tile_w))
+                    pygame.draw.rect(self.screen, cur_color, (x*tile_w, y*tile_h, tile_w, tile_h))
         pygame.display.update()
 
     def human_move(self, env, team2):
@@ -61,13 +61,13 @@ class CaptureView2D:
                     # Selected a unit
                     if env[x][y] == TEAM2_UAV:
                         if isSelected >= 0:
-                            if env[selected[0]][selected[1]] == TEAM2_UAV:
+                            if env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[TEAM2_UAV],\
-                                                    [selected[0]*tile_h, selected[1]*tile_w, tile_h, tile_w])
-                            elif env[selected[0]][selected[1]] == TEAM2_UGV:
+                                                    [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                            elif env[selected[1]][selected[0]] == TEAM2_UGV:
                                 pygame.draw.rect(self.screen, COLOR_DICT[TEAM2_UGV],\
-                                                 [selected[0]*tile_h, selected[1]*tile_w, tile_h, tile_w])
-                        pygame.draw.ellipse(self.screen, COLOR_DICT[SELECTED], [y*tile_h, x*tile_w, tile_h, tile_w])
+                                                 [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                        pygame.draw.ellipse(self.screen, COLOR_DICT[SELECTED], [x*tile_w, y*tile_h, tile_w, tile_h])
                         selected = (y, x)
                         # Determine which unit is selected
                         for i in range(len(team2)):
@@ -76,13 +76,13 @@ class CaptureView2D:
                                 isSelected = i
                     elif env[x][y] == TEAM2_UGV:
                         if isSelected >= 0 and selected[0] != y and selected[1] != x:
-                            if env[selected[0]][selected[1]] == TEAM2_UAV:
+                            if env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[TEAM2_UAV],\
-                                                    [selected[0]*tile_h, selected[1]*tile_w, tile_h, tile_w])
-                            elif env[selected[0]][selected[1]] == TEAM2_UGV:
+                                                    [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                            elif env[selected[1]][selected[0]] == TEAM2_UGV:
                                 pygame.draw.rect(self.screen, COLOR_DICT[TEAM2_UGV],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
-                        pygame.draw.rect(self.screen, COLOR_DICT[SELECTED], (x*tile_w, y*tile_h, tile_w, tile_h))
+                        pygame.draw.rect(self.screen, COLOR_DICT[SELECTED], [x*tile_w, y*tile_h, tile_w, tile_h])
                         selected = (y, x)
                         # Determine which unit is selected
                         for i in range(len(team2)):
@@ -93,40 +93,40 @@ class CaptureView2D:
                     elif y < selected[0] and x == selected[1] and isSelected >= 0:
                         human_move_list[isSelected] = 0
                         moves_recorded+=1
-                        if env[selected[0]][selected[1]] == TEAM2_UGV:
+                        if env[selected[1]][selected[0]] == TEAM2_UGV:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],\
-                                             (selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h))
-                        elif env[selected[0]][selected[1]] == TEAM2_UAV:
+                                             [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                        elif env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     # Moving unit down
                     elif y > selected[0] and x == selected[1] and isSelected >= 0:
                         human_move_list[isSelected] = 2
                         moves_recorded+=1
-                        if env[selected[0]][selected[1]] == TEAM2_UGV:
+                        if env[selected[1]][selected[0]] == TEAM2_UGV:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],\
-                                             (selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h))
-                        elif env[selected[0]][selected[1]] == TEAM2_UAV:
+                                             [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                        elif env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     # Moving unit east
                     elif y == selected[0] and x > selected[1] and isSelected >= 0:
                         human_move_list[isSelected] = 1
                         moves_recorded+=1
-                        if env[selected[0]][selected[1]] == TEAM2_UGV:
+                        if env[selected[1]][selected[0]] == TEAM2_UGV:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],\
-                                             (selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h))
-                        elif env[selected[0]][selected[1]] == TEAM2_UAV:
+                                             [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                        elif env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     # Moving unit up
                     elif y == selected[0] and x < selected[1] and isSelected >= 0:
                         human_move_list[isSelected] = 3
                         moves_recorded+=1
-                        if env[selected[0]][selected[1]] == TEAM2_UGV:
+                        if env[selected[1]][selected[0]] == TEAM2_UGV:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],\
-                                             (selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h))
-                        elif env[selected[0]][selected[1]] == TEAM2_UAV:
+                                             [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
+                        elif env[selected[1]][selected[0]] == TEAM2_UAV:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     pygame.display.update()
