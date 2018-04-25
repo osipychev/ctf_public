@@ -59,6 +59,10 @@ class CapEnv(gym.Env):
                     self.team2.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
 
+        #place arial units at end of list
+        for i in range(len(self.team1)):
+            if self.team1[i].air:
+                self.team1.insert(len(self.team1)-1, self.team1.pop(i))
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
@@ -230,7 +234,6 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="human"
         # print(DataFrame(self._env))
         self.cur_step+=1
         for i in range(len(self.team1)):
@@ -359,6 +362,13 @@ class CapEnv(gym.Env):
                     cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
+
+        #place arial units at end of list
+        for i in range(len(self.team1)):
+            if self.team1[i].air:
+                self.team1.insert(len(self.team1), self.team1.pop(i))
+        for i in range(len(self.team1)):
+            print(self.team1[i].air)
 
         self.create_observation_space()
         self.state = self.observation_space
