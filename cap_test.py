@@ -11,8 +11,8 @@ t = 0
 env.reset()
 while not done:
     # action = env.action_space.sample()  # choose random action
-    action = [4, 4, 4, 4, 4, 4]
-    observation, reward, done, info = env.step(action)  # feedback from environment
+    action = [2, 2, 2, 2, 4, 4]
+    observation, reward, done, info = env.step(action, "random")  # feedback from environment
     #obs, obs2,  or env
     env.render(mode="env")
     t += 1
