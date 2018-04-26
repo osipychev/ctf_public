@@ -63,6 +63,9 @@ class CapEnv(gym.Env):
         for i in range(len(self.team1)):
             if self.team1[i].air:
                 self.team1.insert(len(self.team1)-1, self.team1.pop(i))
+        for i in range(len(self.team2)):
+            if self.team2[i].air:
+                self.team2.insert(len(self.team2)-1, self.team2.pop(i))
         self.action_space = spaces.Box(0, len(self.ACTION)-1,\
                                        shape=(len(self.team1),), dtype=int)
 
@@ -367,6 +370,9 @@ class CapEnv(gym.Env):
         for i in range(len(self.team1)):
             if self.team1[i].air:
                 self.team1.insert(len(self.team1), self.team1.pop(i))
+        for i in range(len(self.team2)):
+            if self.team2[i].air:
+                self.team2.insert(len(self.team2)-1, self.team2.pop(i))
 
         self.create_observation_space()
         self.state = self.observation_space
