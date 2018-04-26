@@ -5,15 +5,12 @@ Karman
 X. Remove absolue paths
 4. Pygame White screen
 X. Video
-X. Training environment (no enemy)
-X. Larger environment
 
 3. Search Mode
 9. Agents
 10. create_map.py docs
 
 Denis
-X. discrete map sizes. env init with v0,v1,v2
 
 BUG:
 reset function performed right after init and does the same job twice. can we just call reset from init?
@@ -25,19 +22,11 @@ reset function performed right after init and does the same job twice. can we ju
     Interactions (probability of hit)
   X Environment initialization
     gray team
-    training environments (different game complexities, small, medium, large, no civilian, survive (?))
-    end condition when no units and time
 
 1.5
     training file intermediate feedback
 
 3. Conda env cleanup
-
-X Red team can't win
-X ugv bug disappearing bug
-X don't let uavs go on flags
-X game end on other team dead bug
-
 
 ISSUES
 ______
@@ -45,3 +34,13 @@ ______
 
 Base graphs on individual episodes
 truncates results
+
+
+TODO
+____
+Action length checker (try except)
+merge master into deep_rl
+test rl with new controls
+ground unit prepend
+red team heuristic in init not _step
+distinguish units

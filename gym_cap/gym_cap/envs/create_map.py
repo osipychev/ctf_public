@@ -1,5 +1,6 @@
 import numpy as np
 from .const import *
+from pandas import *
 
 
 class CreateMap:
@@ -63,7 +64,7 @@ class CreateMap:
                                  TEAM2_BACKGROUND, TEAM2_UAV)
 
         #np.save('map.npy', new_map)
-        return new_map.transpose()
+        return new_map
 
     def gen_random(new_map, code_where, code_what):
         dim = new_map.shape[0]

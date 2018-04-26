@@ -3,6 +3,7 @@ import numpy as np
 
 import gym
 import os
+import random
 from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
@@ -22,7 +23,7 @@ class CapEnv(gym.Env):
         "render.modes": ["fast", "human"],
     }
 
-    ACTION = ["N", "E", "S", "W", "X"]
+    ACTION = ["X", "N", "E", "S", "W"]
 
     def __init__(self, map_size=20):
         """
@@ -35,29 +36,29 @@ class CapEnv(gym.Env):
         """
 
         self._env = CreateMap.gen_map('map', map_size)
-        self.map_size = (len(self._env[0]), len(self._env))
+        self.map_size = (len(self._env), len(self._env[0]))
         self.team_home = self._env.copy()
 
         self.team1 = []
         self.team2 = []
-        for row in range(len(self._env)):
-            for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_UGV:
-                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
+        for x in range(len(self._env)):
+            for y in range(len(self._env[0])):
+                if self._env[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM1_UAV:
-                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_UGV:
-                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
-                elif self._env[row][col] == TEAM2_UAV:
-                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+                elif self._env[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
+                    self.team_home[x][y] = TEAM2_BACKGROUND
 
         # print(DataFrame(self.team_home))
         # print(DataFrame(self._env))
@@ -70,11 +71,14 @@ class CapEnv(gym.Env):
         self.state = self.observation_space
         self.cap_view = CaptureView2D(screen_size=(800, 800))
         self.viewer = None
+
         self.game_lost = False
         self.game_won = False
         self.cur_step = 0
 
-        #TODO necessary?
+        #Necessary for human mode
+        self.first = True
+
         self._seed()
 
     def create_reward(self):
@@ -127,7 +131,6 @@ class CapEnv(gym.Env):
             CapEnv object
         """
 
-        #Always returns team1
         if team == BLUE:
             self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team1:
@@ -140,19 +143,7 @@ class CapEnv(gym.Env):
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space[locy][locx] = self._env[locy][locx]
-#                for i in range(agent.range+1):
-#                    locx, locy = loc[0] + i, loc[1] + (agent.range-i)
-#                    neg_locx = loc[0] - i
-#                    neg_locy = loc[1] - (agent.range-i)
-#                    for j in range(neg_locy, locy+1):
-#                        if locx < self.map_size[0]:
-#                            if  j < self.map_size[1] and j >= 0:
-#                                self.observation_space[j][locx] = self._env[j][locx]
-#                        if neg_locx >= 0:
-#                            if  j < self.map_size[1] and j >= 0:
-#                                self.observation_space[j][neg_locx] = self._env[j][neg_locx]
-
+                            self.observation_space[locx][locy] = self._env[locx][locy]
         elif team == RED:
             self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
             for agent in self.team2:
@@ -165,219 +156,7 @@ class CapEnv(gym.Env):
                         if (i*i + j*j <= agent.range**2) and \
                             not (locx < 0 or locx > self.map_size[0]-1) and \
                             not (locy < 0 or locy > self.map_size[1]-1):
-                            self.observation_space2[locy][locx] = self._env[locy][locx]
-#                for xi in range(-agent.range, agent.range+1):
-#                    for yi in range(-agent.range, agent.range+1):
-#                        locx, locy = loc[0] + xi, loc[1] + yi
-#                        if not (locx < 0 or locx > self.map_size[0]-1) and \
-#                                not (locy < 0 or locy > self.map_size[1]-1):
-#                            self.observation_space2[locy][locx] = self._env[locy][locx]
-
-
-    def move_entity(self, action, unit, team):
-        """
-        Moves each unit individually. Checks if action is valid first.
-        Also checks if game is over (enemy unit touches flag)
-
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        action  : string
-            Action the unit is to take
-        unit    : int
-            Represents where in the unit list is the unit to move
-        team    : int
-            Represents which team the unit belongs to
-        """
-        if team == 1:
-            if not self.team1[unit].isAlive:
-                return
-            locx, locy = self.team1[unit].get_loc()
-            unit_step = self.team1[unit].step
-            if action == "N":
-                if locy-unit_step >= 0 \
-                        and self._env[locy-unit_step][locx]!=OBSTACLE \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_FLAG:
-                    if self._env[locy-unit_step][locx]==TEAM2_FLAG:
-                        if self.team1[unit].air:
-                            return
-                        self.game_won = True
-                    self.team1[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team1[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM1_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM1_FLAG:
-                        self.team1[unit].atHome = True
-                    if self.team1[unit].air:
-                        self._env[locy][locx] = TEAM1_UAV
-                    else:
-                        self._env[locy][locx] = TEAM1_UGV
-            elif action == "S":
-                if locy+unit_step < self.map_size[1] \
-                        and self._env[locy+unit_step][locx]!=OBSTACLE \
-                        and self._env[locy+unit_step][locx]!=TEAM1_UGV \
-                        and self._env[locy+unit_step][locx]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy+unit_step][locx]!=TEAM1_FLAG:
-                    if self._env[locy+unit_step][locx]==TEAM2_FLAG:
-                        if self.team1[unit].air:
-                            return
-                        self.game_won = True
-                    self.team1[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team1[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM1_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM1_FLAG:
-                        self.team1[unit].atHome = True
-                    if self.team1[unit].air:
-                        self._env[locy][locx] = TEAM1_UAV
-                    else:
-                        self._env[locy][locx] = TEAM1_UGV
-            elif action == "E":
-                if locx+unit_step < self.map_size[0] \
-                        and self._env[locy][locx+unit_step]!=OBSTACLE \
-                        and self._env[locy][locx+unit_step]!=TEAM1_UGV \
-                        and self._env[locy][locx+unit_step]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy][locx+unit_step]!=TEAM1_FLAG:
-                    if self._env[locy][locx+unit_step]==TEAM2_FLAG:
-                        if self.team1[unit].air:
-                            return
-                        self.game_won = True
-                    self.team1[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team1[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM1_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM1_FLAG:
-                        self.team1[unit].atHome = True
-                    if self.team1[unit].air:
-                        self._env[locy][locx] = TEAM1_UAV
-                    else:
-                        self._env[locy][locx] = TEAM1_UGV
-            elif action == "W":
-                if locx-unit_step >= 0 \
-                        and self._env[locy][locx-unit_step]!=OBSTACLE \
-                        and self._env[locy][locx-unit_step]!=TEAM1_UGV \
-                        and self._env[locy][locx-unit_step]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy][locx-unit_step]!=TEAM1_FLAG:
-                    if self._env[locy][locx-unit_step]==TEAM2_FLAG:
-                        if self.team1[unit].air:
-                            return
-                        self.game_won = True
-                    self.team1[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team1[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM1_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM1_FLAG:
-                        self.team1[unit].atHome = True
-                    if self.team1[unit].air:
-                        self._env[locy][locx] = TEAM1_UAV
-                    else:
-                        self._env[locy][locx] = TEAM1_UGV
-        elif team == 2:
-            if not self.team2[unit].isAlive:
-                return
-            locx, locy = self.team2[unit].get_loc()
-            unit_step = self.team2[unit].step
-            if action == "N":
-                if locy-unit_step >= 0 \
-                        and self._env[locy-unit_step][locx]!=OBSTACLE \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_FLAG:
-                    if self._env[locy-unit_step][locx]==TEAM1_FLAG:
-                        if self.team2[unit].air:
-                            return
-                        self.game_lost = True
-                    self.team2[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team2[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM2_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM2_FLAG:
-                        self.team2[unit].atHome = True
-                    if self.team2[unit].air:
-                        self._env[locy][locx] = TEAM2_UAV
-                    else:
-                        self._env[locy][locx] = TEAM2_UGV
-            elif action == "S":
-                if locy+unit_step < self.map_size[1] \
-                        and self._env[locy+unit_step][locx]!=OBSTACLE \
-                        and self._env[locy+unit_step][locx]!=TEAM1_UGV \
-                        and self._env[locy+unit_step][locx]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy+unit_step][locx]!=TEAM2_FLAG:
-                    if self._env[locy+unit_step][locx]==TEAM1_FLAG:
-                        if self.team2[unit].air:
-                            return
-                        self.game_lost = True
-                    self.team2[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team2[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM2_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM2_FLAG:
-                        self.team2[unit].atHome = True
-                    if self.team2[unit].air:
-                        self._env[locy][locx] = TEAM2_UAV
-                    else:
-                        self._env[locy][locx] = TEAM2_UGV
-            elif action == "E":
-                if locx+unit_step < self.map_size[0] \
-                        and self._env[locy][locx+unit_step]!=OBSTACLE \
-                        and self._env[locy][locx+unit_step]!=TEAM1_UGV \
-                        and self._env[locy][locx+unit_step]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy][locx+unit_step]!=TEAM2_FLAG:
-                    if self._env[locy][locx+unit_step]==TEAM1_FLAG:
-                        if self.team2[unit].air:
-                            return
-                        self.game_lost = True
-                    self.team2[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team2[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM2_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM2_FLAG:
-                        self.team2[unit].atHome = True
-                    if self.team2[unit].air:
-                        self._env[locy][locx] = TEAM2_UAV
-                    else:
-                        self._env[locy][locx] = TEAM2_UGV
-            elif action == "W":
-                if locx-unit_step >= 0 \
-                        and self._env[locy][locx-unit_step]!=OBSTACLE \
-                        and self._env[locy][locx-unit_step]!=TEAM1_UGV \
-                        and self._env[locy][locx-unit_step]!=TEAM2_UGV \
-                        and self._env[locy-unit_step][locx]!=TEAM1_UAV \
-                        and self._env[locy-unit_step][locx]!=TEAM2_UAV \
-                        and self._env[locy][locx-unit_step]!=TEAM2_FLAG:
-                    if self._env[locy][locx-unit_step]==TEAM1_FLAG:
-                        if self.team2[unit].air:
-                            return
-                        self.game_lost = True
-                    self.team2[unit].move(action)
-                    self._env[locy][locx] = self.team_home[locy][locx]
-                    locx, locy = self.team2[unit].get_loc()
-                    if self.team_home[locy][locx] == TEAM2_BACKGROUND or \
-                            self.team_home[locy][locx] == TEAM2_FLAG:
-                        self.team2[unit].atHome = True
-                    if self.team2[unit].air:
-                        self._env[locy][locx] = TEAM2_UAV
-                    else:
-                        self._env[locy][locx] = TEAM2_UGV
-        else:
-            raise("Team number must be 1 or 2.")
+                            self.observation_space2[locx][locy] = self._env[locx][locy]
 
     #TODO improve
     #Change from range to attack range
@@ -403,13 +182,13 @@ class CapEnv(gym.Env):
                     if (x*x + y*y <= cur_range**2) and \
                         not (locx < 0 or locx > self.map_size[0]-1) and \
                         not (locy < 0 or locy > self.map_size[1]-1):
-                        if self._env[locy][locx] == TEAM2_UGV:
-                            if self.team_home[locy][locx] == TEAM1_BACKGROUND:
+                        if self._env[locx][locy] == TEAM2_UGV:
+                            if self.team_home[locx][locy] == TEAM1_BACKGROUND:
                                 for i in range(len(self.team2)):
                                     enemy_locx, enemy_locy = self.team2[i].get_loc()
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team2[i].isAlive = False
-                                        self._env[locy][locx] = DEAD
+                                        self._env[locx][locy] = DEAD
                                         break
         elif team == 2:
             loc = self.team2[entity_num].get_loc()
@@ -420,14 +199,13 @@ class CapEnv(gym.Env):
                     if (x*x + y*y <= cur_range**2) and \
                         not (locx < 0 or locx > self.map_size[0]-1) and \
                         not (locy < 0 or locy > self.map_size[1]-1):
-                        if self._env[locy][locx] == TEAM1_UGV:
-                            if self.team_home[locy][locx] == TEAM2_BACKGROUND:
+                        if self._env[locx][locy] == TEAM1_UGV:
+                            if self.team_home[locx][locy] == TEAM2_BACKGROUND:
                                 for i in range(len(self.team1)):
                                     enemy_locx, enemy_locy = self.team1[i].get_loc()
-                                    # print(enemy_locx, enemy_locy, locx+x, locy+y)
                                     if enemy_locx == locx and enemy_locy == locy:
                                         self.team1[i].isAlive = False
-                                        self._env[locy][locx] = DEAD
+                                        self._env[locx][locy] = DEAD
                                         break
 
 
@@ -443,7 +221,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action):
+    def _step(self, entities_action, mode="sandbox"):
         """
         Takes one step in the cap the flag game
 
@@ -465,16 +243,14 @@ class CapEnv(gym.Env):
         info    :
             Not sure TODO
         """
-        mode="sandbox"
-        #DEBUGGING
         # print(DataFrame(self._env))
         self.cur_step+=1
         move_list = []
         for i in range(NUM_BLUE+NUM_UAV):
             move_list.append(entities_action%5)
             entities_action = int(entities_action/5)
-        for i in range(len(move_list)):
-            self.move_entity(self.ACTION[move_list[i]], i, 1)
+        for i in range(len(self.team1)):
+            self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #TODO
         #Get team2 actions from heuristic function
@@ -483,8 +259,6 @@ class CapEnv(gym.Env):
         #Move team2
         if mode=="run_away":
             team2_actions = generate_run_actions()
-        elif mode=="random":
-            team2_actions = self.action_space.sample()
         elif mode=="defend":
             team2_actions = EnemyAI.patrol(self.team2)
         elif mode=="attack":
@@ -493,51 +267,62 @@ class CapEnv(gym.Env):
             for i in range(len(self.team2)):
                 locx, locy = self.team2[i].get_loc()
                 if self.team2[i].atHome:
-                    self._env[locy][locx] = TEAM2_BACKGROUND
+                    self._env[locx][locy] = TEAM2_BACKGROUND
                 else:
-                    self._env[locy][locx] = TEAM1_BACKGROUND
+                    self._env[locx][locy] = TEAM1_BACKGROUND
             self.team2=[]
         elif mode=="patrol":
             team2_actions = []
             for agent in self.team2:
                 team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
         elif mode=="random":
-            team2_actions = self.action_space.sample()  # choose random action
+            team2_actions = random.randint(0, len(self.ACTION)**(NUM_RED+NUM_UAV)) # choose random action
+        elif mode=="human":
+            self._render("env")
+            team2_actions = self.cap_view.human_move(self._env, self.team2)
 
+        move_list = []
+        print(team2_actions)
+        for i in range(NUM_RED+NUM_UAV):
+            move_list.append(team2_actions%5)
+            team2_actions = team2_actions//5
+        print(move_list)
         for i in range(len(self.team2)):
-            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
-
-
-        for i in range(len(self.team2)):
-            self.move_entity(self.ACTION[team2_actions[i]], i, 2)
+            self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #Check for dead
         for i in range(len(self.team1)):
             if not self.team1[i].atHome or self.team1[i].air or not self.team1[i].isAlive:
                 continue
             self.check_dead(i, 1)
-
         for i in range(len(self.team2)):
             if not self.team2[i].atHome or self.team2[i].air or not self.team2[i].isAlive:
                 continue
             self.check_dead(i, 2)
 
+        #Check win and lose conditions
         has_alive_entity = False
         for i in self.team2:
             if i.isAlive and not i.air:
                 has_alive_entity = True
-                break
+                locx, locy = i.get_loc()
+                if self.team_home[locx][locy] == TEAM1_FLAG:
+                    self.game_lost = True
+
         if not has_alive_entity and mode!="sandbox":
             self.game_won = True
-
+            self.game_lost = False
         has_alive_entity = False
         for i in self.team1:
             if i.isAlive and not i.air:
                 has_alive_entity = True
-                break
-
+                locx, locy = i.get_loc()
+                if self.team_home[locx][locy] == TEAM2_FLAG:
+                    self.game_lost = False
+                    self.game_won = True
         if not has_alive_entity:
             self.game_lost = True
+            self.game_won = False
 
         reward = self.create_reward()
         if reward <= -1:
@@ -558,7 +343,6 @@ class CapEnv(gym.Env):
             # print("YOU'RE A WINNER!")
         # if self.game_lost:
             # print("YOU'RE A LOSER!")
-
 
         return self.state, reward, isDone, info
 
@@ -582,24 +366,32 @@ class CapEnv(gym.Env):
 
         self.team1 = []
         self.team2 = []
-        for row in range(len(self._env)):
-            for col in range(len(self._env[0])):
-                if self._env[row][col] == TEAM1_UGV:
-                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
+        for y in range(len(self._env)):
+            for x in range(len(self._env[0])):
+                if self._env[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM1_UAV:
-                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
                     self.team1.append(cur_ent)
-                    self.team_home[row][col] = TEAM1_BACKGROUND
-                elif self._env[row][col] == TEAM2_UGV:
-                    cur_ent = GroundVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
-                elif self._env[row][col] == TEAM2_UAV:
-                    cur_ent = AerialVehicle(loc=(col, row),map_only=self.team_home)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+                elif self._env[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
-                    self.team_home[row][col] = TEAM2_BACKGROUND
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+
+        #place arial units at end of list
+        for i in range(len(self.team1)):
+            if self.team1[i].air:
+                self.team1.insert(len(self.team1), self.team1.pop(i))
+        for i in range(len(self.team2)):
+            if self.team2[i].air:
+                self.team2.insert(len(self.team2)-1, self.team2.pop(i))
 
         self.create_observation_space()
         self.state = self.observation_space
@@ -624,7 +416,7 @@ class CapEnv(gym.Env):
         SCREEN_H = 800
         env = self._env
         print(self._env)
-        
+
         from gym.envs.classic_control import rendering
         if self.viewer is None:
             self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
@@ -634,9 +426,9 @@ class CapEnv(gym.Env):
         tile_h = SCREEN_H/len(env[0])
         map_h = len(env[0])
         map_w = len(env)
-        
+
         self.viewer.draw_polygon([(0,0),(SCREEN_W,0),(SCREEN_W,SCREEN_H),(0,SCREEN_H)], color=(0,0,0))
-        
+
         for row in range(map_h):
             for col in range(map_w):
                 cur_color = np.divide(COLOR_DICT[env[row][col]],255)
@@ -673,7 +465,7 @@ class CapEnv(gym.Env):
         elif mode=="team":
             self.cap_view.update_env(self.team_home)
         return
-        
+
     def close(self):
         if self.viewer is not None:
             self.viewer.close()
