@@ -28,8 +28,14 @@ reset function performed right after init and does the same job twice. can we ju
 
 3. Conda env cleanup
 
+ISSUES
+______
+1. Random seed creates random environment for each agent
 
+Base graphs on individual episodes
+truncates results
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 Action length checker (try except)
 merge master into deep_rl
@@ -43,3 +49,12 @@ red team heuristic in init not _step
 distinguish units
 entity id
 >>>>>>> e958814... qol changes. reset in init, prepend ground units
+=======
+
+TODO
+____
+test rl with new controls
+red team heuristic in init not _step
+distinguish units
+entity id
+>>>>>>> deep_rl

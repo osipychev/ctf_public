@@ -130,7 +130,6 @@ class CaptureView2D:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     pygame.display.update()
-        print(human_move_list)
         return human_move_list
 
 
