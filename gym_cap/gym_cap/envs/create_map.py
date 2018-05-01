@@ -8,7 +8,7 @@ class CreateMap:
     given dimension size, number of obstacles,
     and number of agents for each team"""
 
-    def gen_map(name, dim=20, in_seed=None, map_obj=[4, 4, 2, 4, 2, 0]):
+    def gen_map(name, dim=20, in_seed=None, map_obj=[4, NUM_BLUE, NUM_UAV, NUM_RED, NUM_UAV, 0]):
         """
         0 <= in_seed <= 2**32
 

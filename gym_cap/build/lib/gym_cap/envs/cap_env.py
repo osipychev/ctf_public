@@ -3,11 +3,8 @@ import numpy as np
 
 import gym
 import os
-<<<<<<< HEAD
-=======
 import sys
 import random
->>>>>>> e958814... qol changes. reset in init, prepend ground units
 from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
@@ -27,7 +24,7 @@ class CapEnv(gym.Env):
         "render.modes": ["fast", "human"],
     }
 
-    ACTION = ["N", "E", "S", "W", "X"]
+    ACTION = ["X", "N", "E", "S", "W"]
 
     def __init__(self, map_size=20):
         """
@@ -38,58 +35,7 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-<<<<<<< HEAD
-
-        self._env = CreateMap.gen_map('map', map_size)
-        self.map_size = (len(self._env), len(self._env[0]))
-        self.team_home = self._env.copy()
-
-        self.team1 = []
-        self.team2 = []
-        for x in range(len(self._env)):
-            for y in range(len(self._env[0])):
-                if self._env[x][y] == TEAM1_UGV:
-                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
-                    self.team1.append(cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM1_UAV:
-                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
-                    self.team1.append(cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM2_UGV:
-                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
-                    self.team2.append(cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-                elif self._env[x][y] == TEAM2_UAV:
-                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
-                    self.team2.append(cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-
-        #place arial units at end of list
-        for i in range(len(self.team1)):
-            if self.team1[i].air:
-                self.team1.insert(len(self.team1)-1, self.team1.pop(i))
-        for i in range(len(self.team2)):
-            if self.team2[i].air:
-                self.team2.insert(len(self.team2)-1, self.team2.pop(i))
-        self.action_space = spaces.Box(0, len(self.ACTION)-1,\
-                                       shape=(len(self.team1),), dtype=int)
-
-        self.create_observation_space(RED)
-        self.create_observation_space(BLUE)
-        self.state = self.observation_space
-        self.cap_view = CaptureView2D(screen_size=(600, 600))
-        self.game_lost = False
-        self.game_won = False
-        self.cur_step = 0
-
-        #Necessary for human mode
-        self.first = True
-
-        self._seed()
-=======
         self._reset(map_size)
->>>>>>> e958814... qol changes. reset in init, prepend ground units
 
     def create_reward(self):
         """
@@ -102,10 +48,10 @@ class CapEnv(gym.Env):
         """
         reward = 0
         #Win and loss return max rewards
-        if self.game_lost:
-            return -1
-        if self.game_won:
-            return 1
+        # if self.game_lost:
+            # return -1
+        # if self.game_won:
+            # return 1
 
         #Dead enemy team gives .5/total units for each dead unit
         for i in self.team2:
@@ -116,10 +62,18 @@ class CapEnv(gym.Env):
                 reward-=(.5/len(self.team1))
 
         #10,000 steps returns -.5
-        if self.cur_step > 10000:
-            reward-=.5
-        else:
-            reward-=((self.cur_step/10000.0)*.5)
+        # map_size_2 = map_size[0]*map_size[1]
+        # reward-=(.5/map_size_2)
+        reward-=(.5/100)
+        if self.game_won:
+            reward+=1
+        if reward <= -1:
+            reward = -1
+            self.game_lost = True
+        # if self.cur_step > 10000:
+            # reward-=.5
+        # else:
+            # reward-=((self.cur_step/10000.0)*.5)
 
         return reward
 
@@ -211,7 +165,6 @@ class CapEnv(gym.Env):
                                         break
 
 
-    #TODO necessary?
     def _seed(self, seed=None):
         """
         todo docs still
@@ -248,8 +201,6 @@ class CapEnv(gym.Env):
         """
         # print(DataFrame(self._env))
         self.cur_step+=1
-<<<<<<< HEAD
-=======
         move_list = []
         for i in range(NUM_BLUE+NUM_UAV):
             move_list.append(entities_action%5)
@@ -258,9 +209,8 @@ class CapEnv(gym.Env):
         if not len(move_list) == NUM_BLUE+NUM_UAV:
             sys.exit("You entered", len(move_list), "moves. There are", NUM_BLUE+NUM_UAV, "entities.")
 
->>>>>>> e958814... qol changes. reset in init, prepend ground units
         for i in range(len(self.team1)):
-            self.team1[i].move(self.ACTION[entities_action[i]], self._env, self.team_home)
+            self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #TODO
         #Get team2 actions from heuristic function
@@ -269,8 +219,6 @@ class CapEnv(gym.Env):
         #Move team2
         if mode=="run_away":
             team2_actions = generate_run_actions()
-        elif mode=="random":
-            team2_actions = self.action_space.sample()
         elif mode=="defend":
             team2_actions = EnemyAI.patrol(self.team2)
         elif mode=="attack":
@@ -288,13 +236,19 @@ class CapEnv(gym.Env):
             for agent in self.team2:
                 team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
         elif mode=="random":
-            team2_actions = self.action_space.sample()  # choose random action
+            team2_actions = random.randint(0, len(self.ACTION)**(NUM_RED+NUM_UAV)) # choose random action
         elif mode=="human":
             self._render("env")
             team2_actions = self.cap_view.human_move(self._env, self.team2)
 
+        move_list = []
+        print(team2_actions)
+        for i in range(NUM_RED+NUM_UAV):
+            move_list.append(team2_actions%5)
+            team2_actions = team2_actions//5
+        print(move_list)
         for i in range(len(self.team2)):
-            self.team2[i].move(self.ACTION[team2_actions[i]], self._env, self.team_home)
+            self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #Check for dead
         for i in range(len(self.team1)):
@@ -331,20 +285,24 @@ class CapEnv(gym.Env):
             self.game_won = False
 
         reward = self.create_reward()
+        if reward <= -1:
+            reward = -1
+            game_lost = True
 
-        self.create_observation_space(BLUE)
-        self.create_observation_space(RED)
-        self.state = self.observation_space
+        # self.create_observation_space(BLUE)
+        # self.create_observation_space(RED)
+        # self.state = self.observation_space
+        self.state = self._env
 
         #TODO game over
         isDone = False
         if self.game_won or self.game_lost:
             isDone = True
         info = {}
-        if self.game_won:
-            print("YOU'RE A WINNER!")
-        if self.game_lost:
-            print("YOU'RE A LOSER!")
+        # if self.game_won:
+            # print("YOU'RE A WINNER!")
+        # if self.game_lost:
+            # print("YOU'RE A LOSER!")
 
         return self.state, reward, isDone, info
 
@@ -362,17 +320,12 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
-<<<<<<< HEAD
-        self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=in_seed)
-=======
-
         if map_size == None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
         else:
             self._env = CreateMap.gen_map('map', map_size)
 
         self.map_size = (len(self._env), len(self._env[0]))
->>>>>>> e958814... qol changes. reset in init, prepend ground units
         self.team_home = self._env.copy()
 
         self.team1 = []
@@ -429,10 +382,52 @@ class CapEnv(gym.Env):
 
         return self.state
 
-    def _render(self, mode="obs", close=False):
+    def render(self, mode="human"):
         """
         Renders the screen options="obs, env"
 
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        mode    : string
+            Defines what will be rendered
+        """
+        SCREEN_W = 800
+        SCREEN_H = 800
+        env = self._env
+        print(self._env)
+
+        from gym.envs.classic_control import rendering
+        if self.viewer is None:
+            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+
+        tile_w = SCREEN_W/len(env)
+        tile_h = SCREEN_H/len(env[0])
+        map_h = len(env[0])
+        map_w = len(env)
+
+        self.viewer.draw_polygon([(0,0),(SCREEN_W,0),(SCREEN_W,SCREEN_H),(0,SCREEN_H)], color=(0,0,0))
+
+        for row in range(map_h):
+            for col in range(map_w):
+                cur_color = np.divide(COLOR_DICT[env[row][col]],255)
+                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+                    self.viewer.draw_circle(tile_w/2, 20, color=cur_color).add_attr([col*tile_w, row*tile_h])
+                else:
+                    self.viewer.draw_polygon([
+                            (col*tile_w, row*tile_h),
+                            (col*tile_w+tile_w, row*tile_h),
+                            (col*tile_w+tile_w, row*tile_h+ tile_h),
+                            (col*tile_w, row*tile_h+ tile_h)], color=cur_color)
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+        #print(self._env)
+
+    def _render(self, mode="obs", close=False):
+        """
+        Renders the screen options="obs, env"
         Parameters
         ----------
         self    : object
@@ -452,6 +447,10 @@ class CapEnv(gym.Env):
             self.cap_view.update_env(self.team_home)
         return
 
+    def close(self):
+        if self.viewer is not None:
+            self.viewer.close()
+            self.viewer = None
 
 
 #Different environment sizes
