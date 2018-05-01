@@ -13,8 +13,6 @@ X. Video
 Denis
 
 BUG:
-reset function performed right after init and does the same job twice. can we just call reset from init?
-
 1. Add complexity:
     Observation changes wall blocks
     UAV movement (over walls and anywhere from 1 block to range blocks)
@@ -30,19 +28,17 @@ reset function performed right after init and does the same job twice. can we ju
 
 ISSUES
 ______
-1. Random seed creates random environment for each agent
 
-Base graphs on individual episodes
-truncates results
-
-Action length checker (try except)
-merge master into deep_rl
-test rl with new controls
 
 TODO
 ____
-test rl with new controls
-red team heuristic in init not _step
 distinguish units
 entity id
-in_seed in _reset
+test rl with new controls
+
+1. Solve single agent
+2. UAV moves over obstacles
+3. UAV moves to border
+4. Random seed creates random environment for each agent
+5. Clean up manual control
+6. Red team heuristic in init not _step
