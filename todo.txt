@@ -38,9 +38,7 @@ truncates results
 
 TODO
 ____
-Action length checker (try except)
-merge master into deep_rl
 test rl with new controls
-ground unit prepend
 red team heuristic in init not _step
 distinguish units
+entity id

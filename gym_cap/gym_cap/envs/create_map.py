@@ -30,9 +30,8 @@ class CreateMap:
             Random seed to control map generation
 
         """
-        if in_seed != None:
+        if not in_seed == None:
             np.random.seed(in_seed)
-        np.random.seed(5)
         new_map = np.zeros([dim, dim], dtype=int)
 
         # zones and obstacles init
