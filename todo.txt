@@ -35,12 +35,9 @@ ______
 Base graphs on individual episodes
 truncates results
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 Action length checker (try except)
 merge master into deep_rl
 test rl with new controls
-=======
 
 TODO
 ____
@@ -48,13 +45,4 @@ test rl with new controls
 red team heuristic in init not _step
 distinguish units
 entity id
->>>>>>> e958814... qol changes. reset in init, prepend ground units
-=======
-
-TODO
-____
-test rl with new controls
-red team heuristic in init not _step
-distinguish units
-entity id
->>>>>>> deep_rl
+in_seed in _reset

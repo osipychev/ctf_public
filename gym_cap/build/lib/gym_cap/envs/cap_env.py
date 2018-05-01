@@ -202,12 +202,12 @@ class CapEnv(gym.Env):
         # print(DataFrame(self._env))
         self.cur_step+=1
         move_list = []
-        for i in range(NUM_BLUE+NUM_UAV):
+        while not entities_action == 0:
             move_list.append(entities_action%5)
             entities_action = int(entities_action/5)
         #ERROR checking
         if not len(move_list) == NUM_BLUE+NUM_UAV:
-            sys.exit("You entered", len(move_list), "moves. There are", NUM_BLUE+NUM_UAV, "entities.")
+            sys.exit("ERROR: You entered " + str(len(move_list)) + " moves. There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
 
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
@@ -242,11 +242,9 @@ class CapEnv(gym.Env):
             team2_actions = self.cap_view.human_move(self._env, self.team2)
 
         move_list = []
-        print(team2_actions)
         for i in range(NUM_RED+NUM_UAV):
             move_list.append(team2_actions%5)
             team2_actions = team2_actions//5
-        print(move_list)
         for i in range(len(self.team2)):
             self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
@@ -349,8 +347,6 @@ class CapEnv(gym.Env):
                     self.team2.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
 
-        for i in self.team2:
-            print(i.air)
         # print(DataFrame(self._env))
         #place arial units at end of list
         for i in range(len(self.team1)):
