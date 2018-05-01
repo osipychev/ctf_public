@@ -7,6 +7,10 @@ BLUE = 50
 GRAY = 90
 NUM_BLUE = 4
 NUM_RED = 4
+<<<<<<< HEAD
+=======
+#TODO red and blue uav
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
 NUM_UAV = 2
 NUM_GRAY = 10
 UAV_STEP = 3

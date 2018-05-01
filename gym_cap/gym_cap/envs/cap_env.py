@@ -3,6 +3,11 @@ import numpy as np
 
 import gym
 import os
+<<<<<<< HEAD
+=======
+import sys
+import random
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
 from gym import error, spaces, utils
 from gym.utils import seeding
 from .cap_view2d import CaptureView2D
@@ -33,6 +38,7 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
+<<<<<<< HEAD
 
         self._env = CreateMap.gen_map('map', map_size)
         self.map_size = (len(self._env), len(self._env[0]))
@@ -81,6 +87,9 @@ class CapEnv(gym.Env):
         self.first = True
 
         self._seed()
+=======
+        self._reset(map_size)
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
 
     def create_reward(self):
         """
@@ -239,6 +248,17 @@ class CapEnv(gym.Env):
         """
         # print(DataFrame(self._env))
         self.cur_step+=1
+<<<<<<< HEAD
+=======
+        move_list = []
+        for i in range(NUM_BLUE+NUM_UAV):
+            move_list.append(entities_action%5)
+            entities_action = int(entities_action/5)
+        #ERROR checking
+        if not len(move_list) == NUM_BLUE+NUM_UAV:
+            sys.exit("You entered", len(move_list), "moves. There are", NUM_BLUE+NUM_UAV, "entities.")
+
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[entities_action[i]], self._env, self.team_home)
 
@@ -328,7 +348,7 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    def _reset(self, in_seed=None):
+    def _reset(self, map_size=None, in_seed=None):
         """
         Resets the game
 
@@ -342,7 +362,17 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
+<<<<<<< HEAD
         self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=in_seed)
+=======
+
+        if map_size == None:
+            self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
+        else:
+            self._env = CreateMap.gen_map('map', map_size)
+
+        self.map_size = (len(self._env), len(self._env[0]))
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
         self.team_home = self._env.copy()
 
         self.team1 = []
@@ -351,7 +381,7 @@ class CapEnv(gym.Env):
             for x in range(len(self._env[0])):
                 if self._env[x][y] == TEAM1_UGV:
                     cur_ent = GroundVehicle((x, y), self.team_home, 1)
-                    self.team1.append(cur_ent)
+                    self.team1.insert(0, cur_ent)
                     self.team_home[x][y] = TEAM1_BACKGROUND
                 elif self._env[x][y] == TEAM1_UAV:
                     cur_ent = AerialVehicle((x, y), self.team_home, 1)
@@ -359,13 +389,16 @@ class CapEnv(gym.Env):
                     self.team_home[x][y] = TEAM1_BACKGROUND
                 elif self._env[x][y] == TEAM2_UGV:
                     cur_ent = GroundVehicle((x, y), self.team_home, 2)
-                    self.team2.append(cur_ent)
+                    self.team2.insert(0, cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
                 elif self._env[x][y] == TEAM2_UAV:
                     cur_ent = AerialVehicle((x, y), self.team_home, 2)
                     self.team2.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
 
+        for i in self.team2:
+            print(i.air)
+        # print(DataFrame(self._env))
         #place arial units at end of list
         for i in range(len(self.team1)):
             if self.team1[i].air:
@@ -374,11 +407,25 @@ class CapEnv(gym.Env):
             if self.team2[i].air:
                 self.team2.insert(len(self.team2)-1, self.team2.pop(i))
 
-        self.create_observation_space()
-        self.state = self.observation_space
+        self.action_space = spaces.Discrete(len(self.ACTION)**(NUM_BLUE+NUM_UAV))
 
         self.game_lost = False
         self.game_won = False
+
+        self.create_observation_space(RED)
+        self.create_observation_space(BLUE)
+        self.state = self.observation_space
+        self.cap_view = CaptureView2D(screen_size=(800, 800))
+        self.viewer = None
+
+        self.game_lost = False
+        self.game_won = False
+        self.cur_step = 0
+
+        #Necessary for human mode
+        self.first = True
+
+        self._seed()
 
         return self.state
 

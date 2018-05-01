@@ -30,6 +30,16 @@ reset function performed right after init and does the same job twice. can we ju
 
 
 
+<<<<<<< HEAD
 Action length checker (try except)
 merge master into deep_rl
 test rl with new controls
+=======
+
+TODO
+____
+test rl with new controls
+red team heuristic in init not _step
+distinguish units
+entity id
+>>>>>>> e958814... qol changes. reset in init, prepend ground units
