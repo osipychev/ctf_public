@@ -21,6 +21,9 @@ class CaptureView2D:
 
     def update_env(self, env):
         if self.screen == None:
+            if (len(env) != len(env[0])):
+                self.__screen_size = (int(self.__screen_size[1] * (len(env)/len(env[0]))), self.__screen_size[1])
+                print(self.__screen_size)
             self.screen = pygame.display.set_mode(self.__screen_size)
         tile_w = self.SCREEN_W/len(env)
         tile_h = self.SCREEN_H/len(env[0])
@@ -130,7 +133,6 @@ class CaptureView2D:
                                 pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],\
                                                     [selected[1]*tile_w, selected[0]*tile_h, tile_w, tile_h])
                     pygame.display.update()
-        print(human_move_list)
         return human_move_list
 
 
