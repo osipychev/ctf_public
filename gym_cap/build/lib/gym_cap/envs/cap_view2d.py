@@ -8,7 +8,7 @@ from pandas import *
 QUIT = 12
 
 class CaptureView2D:
-    def __init__(self, game_name="Capture the Flag", screen_size=(600, 600)):
+    def __init__(self, game_name="Capture the Flag", screen_size=(400, 400)):
 
         # PyGame configurations
         pygame.init()
@@ -23,7 +23,6 @@ class CaptureView2D:
         if self.screen == None:
             if (len(env) != len(env[0])):
                 self.__screen_size = (int(self.__screen_size[1] * (len(env)/len(env[0]))), self.__screen_size[1])
-                print(self.__screen_size)
             self.screen = pygame.display.set_mode(self.__screen_size)
         tile_w = self.SCREEN_W/len(env)
         tile_h = self.SCREEN_H/len(env[0])
