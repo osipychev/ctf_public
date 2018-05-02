@@ -21,6 +21,9 @@ class CaptureView2D:
 
     def update_env(self, env):
         if self.screen == None:
+            if (len(env) != len(env[0])):
+                self.__screen_size = (int(self.__screen_size[1] * (len(env)/len(env[0]))), self.__screen_size[1])
+                print(self.__screen_size)
             self.screen = pygame.display.set_mode(self.__screen_size)
         tile_w = self.SCREEN_W/len(env)
         tile_h = self.SCREEN_H/len(env[0])
