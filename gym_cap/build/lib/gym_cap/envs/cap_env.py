@@ -202,12 +202,12 @@ class CapEnv(gym.Env):
         # print(DataFrame(self._env))
         self.cur_step+=1
         move_list = []
-        while not entities_action == 0:
+        if entities_action >= len(self.ACTION)**(NUM_BLUE+NUM_UAV):
+            sys.exit("ERROR: You entered too many moves. There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
+        while len(move_list) < (NUM_BLUE+NUM_UAV):
             move_list.append(entities_action%5)
             entities_action = int(entities_action/5)
         #ERROR checking
-        if not len(move_list) == NUM_BLUE+NUM_UAV:
-            sys.exit("ERROR: You entered " + str(len(move_list)) + " moves. There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
 
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
