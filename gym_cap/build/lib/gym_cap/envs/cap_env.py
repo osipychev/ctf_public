@@ -287,10 +287,10 @@ class CapEnv(gym.Env):
             reward = -1
             game_lost = True
 
-        # self.create_observation_space(BLUE)
+        self.create_observation_space(BLUE)
         # self.create_observation_space(RED)
         # self.state = self.observation_space
-        self.state = self._env
+        self.state = self.observation_space
 
         #TODO game over
         isDone = False
@@ -364,7 +364,7 @@ class CapEnv(gym.Env):
         self.create_observation_space(RED)
         self.create_observation_space(BLUE)
         self.state = self.observation_space
-        self.cap_view = CaptureView2D(screen_size=(800, 800))
+        self.cap_view = CaptureView2D(screen_size=(500, 500))
         self.viewer = None
 
         self.game_lost = False
@@ -392,7 +392,6 @@ class CapEnv(gym.Env):
         SCREEN_W = 800
         SCREEN_H = 800
         env = self._env
-        print(self._env)
 
         from gym.envs.classic_control import rendering
         if self.viewer is None:
