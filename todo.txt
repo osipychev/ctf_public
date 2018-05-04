@@ -37,8 +37,6 @@ entity id
 test rl with new controls
 
 1. Solve single agent
-2. UAV moves over obstacles
-3. UAV moves to border
 4. Random seed creates random environment for each agent
 5. Clean up manual control
 6. Red team heuristic in init not _step

@@ -26,7 +26,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20):
+    def __init__(self, map_size=20, mode="sandbox"):
         """
         Constructor
 
@@ -35,7 +35,8 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        self._reset(map_size)
+        print(mode)
+        self._reset(map_size, mode=mode)
 
     def create_reward(self):
         """
@@ -177,7 +178,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action, mode="sandbox"):
+    def _step(self, entities_action):
         """
         Takes one step in the cap the flag game
 
@@ -202,12 +203,20 @@ class CapEnv(gym.Env):
         # print(DataFrame(self._env))
         self.cur_step+=1
         move_list = []
-        if entities_action >= len(self.ACTION)**(NUM_BLUE+NUM_UAV):
-            sys.exit("ERROR: You entered too many moves. There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
-        while len(move_list) < (NUM_BLUE+NUM_UAV):
-            move_list.append(entities_action%5)
-            entities_action = int(entities_action/5)
+
         #ERROR checking
+        if type(entities_action) is int:
+            if entities_action >= len(self.ACTION)**(NUM_BLUE+NUM_UAV):
+                sys.exit("ERROR: You entered too many moves. \
+                         There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
+            while len(move_list) < (NUM_BLUE+NUM_UAV):
+                move_list.append(entities_action%5)
+                entities_action = int(entities_action/5)
+        else:
+            if len(entities_action) > NUM_BLUE+NUM_UAV:
+                sys.exit("ERROR: You entered too many moves. \
+                         There are " + str(NUM_BLUE+NUM_UAV) + " entities.")
+            move_list = entities_action
 
         for i in range(len(self.team1)):
             self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
@@ -217,13 +226,14 @@ class CapEnv(gym.Env):
         # team2_actions = generate_actions()
 
         #Move team2
-        if mode=="run_away":
+        team2_actions = 0
+        if self.mode=="run_away":
             team2_actions = generate_run_actions()
-        elif mode=="defend":
+        elif self.mode=="defend":
             team2_actions = EnemyAI.patrol(self.team2)
-        elif mode=="attack":
+        elif self.mode=="attack":
             team2_actions = self.action_space.sample()
-        elif mode=="sandbox":
+        elif self.mode=="sandbox":
             for i in range(len(self.team2)):
                 locx, locy = self.team2[i].get_loc()
                 if self.team2[i].atHome:
@@ -231,20 +241,24 @@ class CapEnv(gym.Env):
                 else:
                     self._env[locx][locy] = TEAM1_BACKGROUND
             self.team2=[]
-        elif mode=="patrol":
-            team2_actions = []
+        elif self.mode=="patrol":
             for agent in self.team2:
                 team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
-        elif mode=="random":
+        elif self.mode=="random":
             team2_actions = random.randint(0, len(self.ACTION)**(NUM_RED+NUM_UAV)) # choose random action
-        elif mode=="human":
+        elif self.mode=="human":
             self._render("env")
             team2_actions = self.cap_view.human_move(self._env, self.team2)
 
+        #Allows for both an integer and a list input
         move_list = []
-        for i in range(NUM_RED+NUM_UAV):
-            move_list.append(team2_actions%5)
-            team2_actions = team2_actions//5
+        if team2_actions is int:
+            for i in range(len(self.team2)):
+                move_list.append(team2_actions%5)
+                team2_actions = team2_actions//5
+        else:
+            move_list = team2_actions
+
         for i in range(len(self.team2)):
             self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
@@ -267,7 +281,7 @@ class CapEnv(gym.Env):
                 if self.team_home[locx][locy] == TEAM1_FLAG:
                     self.game_lost = True
 
-        if not has_alive_entity and mode!="sandbox":
+        if not has_alive_entity and self.mode!="sandbox":
             self.game_won = True
             self.game_lost = False
         has_alive_entity = False
@@ -304,7 +318,7 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    def _reset(self, map_size=None, in_seed=None):
+    def _reset(self, map_size=None, in_seed=None, mode=None):
         """
         Resets the game
 
@@ -318,6 +332,7 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
+        print(mode)
         if map_size == None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
         else:
@@ -366,6 +381,8 @@ class CapEnv(gym.Env):
         self.state = self.observation_space
         self.cap_view = CaptureView2D(screen_size=(500, 500))
         self.viewer = None
+        if not mode == None:
+            self.mode = mode
 
         self.game_lost = False
         self.game_won = False
