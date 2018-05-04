@@ -13,13 +13,14 @@ t = 0
 while True:
     while not done:
         action = env.action_space.sample()  # choose random action
+        # action = [0, 0, 0]
         # action = (4)*(5**0) \
             # +(4)*(5**1) \
             # +(4)*(5**2) \
             # +(4)*(5**3) \
             # +(4)*(5**4) \
             # +(4)*(5**5)
-        observation, reward, done, info = env.step(action, "random")  # feedback from environment
+        observation, reward, done, info = env.step(action)  # feedback from environment
         #obs, obs2,  or env
 
         for agent in env.team1:
