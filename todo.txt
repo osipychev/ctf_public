@@ -39,4 +39,4 @@ test rl with new controls
 1. Solve single agent
 4. Random seed creates random environment for each agent
 5. Clean up manual control
-6. Red team heuristic in init not _step
+6. Control blue team (on obs space)

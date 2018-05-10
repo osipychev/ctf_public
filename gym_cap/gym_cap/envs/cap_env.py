@@ -35,7 +35,6 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        print(mode)
         self._reset(map_size, mode=mode)
 
     def create_reward(self):
@@ -332,7 +331,6 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
-        print(mode)
         if map_size == None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
         else:
