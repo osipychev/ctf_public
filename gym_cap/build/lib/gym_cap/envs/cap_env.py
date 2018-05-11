@@ -26,7 +26,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="sandbox"):
+    def __init__(self, map_size=20, mode="human"):
         """
         Constructor
 
@@ -35,7 +35,6 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        print(mode)
         self._reset(map_size, mode=mode)
 
     def create_reward(self):
@@ -55,6 +54,7 @@ class CapEnv(gym.Env):
             # return 1
 
         #Dead enemy team gives .5/total units for each dead unit
+        #BUG
         for i in self.team2:
             if not i.isAlive:
                 reward+=(.5/len(self.team2))
@@ -260,6 +260,7 @@ class CapEnv(gym.Env):
             move_list = team2_actions
 
         for i in range(len(self.team2)):
+            self.team2[i].moveSelected = False
             self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #Check for dead
@@ -332,7 +333,6 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
-        print(mode)
         if map_size == None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
         else:
