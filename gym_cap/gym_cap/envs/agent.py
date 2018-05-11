@@ -30,6 +30,7 @@ class Agent():
         self.air = False
         self.ai = EnemyAI(map_only)
         self.team = team_number
+        self.moveSelected = False
 
     def move(self, action, env, team_home):
         """

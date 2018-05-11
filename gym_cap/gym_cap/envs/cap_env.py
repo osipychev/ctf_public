@@ -26,7 +26,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="sandbox"):
+    def __init__(self, map_size=20, mode="human"):
         """
         Constructor
 
@@ -54,6 +54,7 @@ class CapEnv(gym.Env):
             # return 1
 
         #Dead enemy team gives .5/total units for each dead unit
+        #BUG
         for i in self.team2:
             if not i.isAlive:
                 reward+=(.5/len(self.team2))
@@ -259,6 +260,7 @@ class CapEnv(gym.Env):
             move_list = team2_actions
 
         for i in range(len(self.team2)):
+            self.team2[i].moveSelected = False
             self.team2[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         #Check for dead
