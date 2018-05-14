@@ -253,13 +253,14 @@ class CapEnv(gym.Env):
 
         # Allows for both an integer and a list input
         move_list = []
-        if team2_actions is int:
+        if isinstance(team2_actions, int):
             for i in range(len(self.team2)):
                 move_list.append(team2_actions % 5)
                 team2_actions = team2_actions // 5
         else:
             move_list = team2_actions
 
+        print(move_list)
         i = 0
         for agent in self.team2:
             if agent.isAlive:
