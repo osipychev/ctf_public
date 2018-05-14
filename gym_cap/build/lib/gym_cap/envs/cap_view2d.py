@@ -61,7 +61,6 @@ class CaptureView2D:
         tile_h = self.SCREEN_H / len(env[0])
         i = 0
         # Cycle through agents
-        print(len(team_list))
         while i < len(team_list):
             if not team_list[i].isAlive:
                 i += 1
@@ -102,7 +101,6 @@ class CaptureView2D:
                         team_list[i].move_selected = True
                         move_list.append(0)
 
-                    print(team_list[i].move_selected)
                     if team_list[i].move_selected:
                         if team_list[i].air:
                             pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],
@@ -111,7 +109,6 @@ class CaptureView2D:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],
                                              [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
                         i += 1
-        print(move_list)
         return move_list
 
     def quit_game(self):
