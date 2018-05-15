@@ -33,6 +33,7 @@ class CaptureView2D:
             if event.type == pygame.QUIT:
                 pygame.display.quit()
                 pygame.quit()
+                sys.exit(0)
 
         for x in range(map_w):
             for y in range(map_h):
@@ -75,6 +76,10 @@ class CaptureView2D:
             pygame.display.update()
             ev = pygame.event.get()
             for event in ev:
+                if event.type == pygame.QUIT:
+                    pygame.display.quit()
+                    pygame.quit()
+                    sys.exit(0)
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 # Mouse button release event
                 if event.type == pygame.MOUSEBUTTONUP:
