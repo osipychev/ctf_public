@@ -37,9 +37,8 @@ entity id
 test rl with new controls
 
 1. Solve single agent
-4. Random seed creates random environment for each agent
+4. Random seed creates random environment for each train
 6. Control blue team (on obs space)
-8. Reward Bug
 9. Plots graph at intervals in PG
 10. Move rendering into render
-11. Documentation
+11. Documentation (sphynx)

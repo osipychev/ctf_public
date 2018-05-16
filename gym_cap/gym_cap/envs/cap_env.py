@@ -1,19 +1,15 @@
-# TODO create documentation
-import numpy as np
+import random
+import sys
 
 import gym
-import os
-import sys
-import random
-from gym import error, spaces, utils
+from gym import spaces
 from gym.utils import seeding
-from .cap_view2d import CaptureView2D
-from .const import *
-from .create_map import CreateMap
-from .enemy_ai import EnemyAI
-from .agent import *
-
 from pandas import *
+
+from .agent import *
+from .enemy_ai import EnemyAI
+from .cap_view2d import CaptureView2D
+from .create_map import CreateMap
 
 """
 Requires that all units initially exist in home zone.
@@ -27,7 +23,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="human"):
+    def __init__(self, map_size=20, mode="random"):
         """
         Constructor
 
@@ -37,6 +33,82 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self._reset(map_size, mode=mode)
+
+    def _reset(self, map_size=None, in_seed=None, mode=None):
+        """
+        Resets the game
+
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+
+        Returns
+        -------
+        state    : object
+            CapEnv object
+        """
+        if map_size is None:
+            self._env = CreateMap.gen_map('map', dim=self.map_size[0])
+        else:
+            self._env = CreateMap.gen_map('map', map_size)
+
+        self.map_size = (len(self._env), len(self._env[0]))
+        self.team_home = self._env.copy()
+
+        self.team1 = []
+        self.team2 = []
+        for y in range(len(self._env)):
+            for x in range(len(self._env[0])):
+                if self._env[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle([x, y], self.team_home, 1)
+                    self.team1.insert(0, cur_ent)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle([x, y], self.team_home, 1)
+                    self.team1.append(cur_ent)
+                    self.team_home[x][y] = TEAM1_BACKGROUND
+                elif self._env[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle([x, y], self.team_home, 2)
+                    self.team2.insert(0, cur_ent)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+                elif self._env[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle([x, y], self.team_home, 2)
+                    self.team2.append(cur_ent)
+                    self.team_home[x][y] = TEAM2_BACKGROUND
+
+        # print(DataFrame(self._env))
+        # place arial units at end of list
+        for i in range(len(self.team1)):
+            if self.team1[i].air:
+                self.team1.insert(len(self.team1), self.team1.pop(i))
+        for i in range(len(self.team2)):
+            if self.team2[i].air:
+                self.team2.insert(len(self.team2) - 1, self.team2.pop(i))
+
+        self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
+
+        self.game_lost = False
+        self.game_won = False
+
+        self.create_observation_space(RED)
+        self.create_observation_space(BLUE)
+        self.state = self.observation_space
+        self.cap_view = CaptureView2D(screen_size=(500, 500))
+        self.viewer = None
+        if not mode is None:
+            self.mode = mode
+
+        self.game_lost = False
+        self.game_won = False
+        self.cur_step = 0
+
+        # Necessary for human mode
+        self.first = True
+
+        self._seed()
+
+        return self.state
 
     def create_reward(self):
         """
@@ -55,18 +127,17 @@ class CapEnv(gym.Env):
         # return 1
 
         # Dead enemy team gives .5/total units for each dead unit
-        # BUG
-        for i in self.team2:
-            if not i.isAlive:
+        for i in range(len(self.team2)):
+            if not self.team2[i].isAlive:
                 reward += (.5 / len(self.team2))
-        for i in self.team1:
-            if not i.isAlive:
+        for i in range(len(self.team1)):
+            if not self.team1[i].isAlive:
                 reward -= (.5 / len(self.team1))
 
         # 10,000 steps returns -.5
         # map_size_2 = map_size[0]*map_size[1]
         # reward-=(.5/map_size_2)
-        reward -= (.5 / 100)
+        reward -= (.5 / 100) * self.cur_step
         if self.game_won:
             reward += 1
         if reward <= -1:
@@ -87,6 +158,8 @@ class CapEnv(gym.Env):
         ----------
         self    : object
             CapEnv object
+        team    : int
+            Team to create obs space for
         """
 
         if team == BLUE:
@@ -260,7 +333,6 @@ class CapEnv(gym.Env):
         else:
             move_list = team2_actions
 
-        print(move_list)
         i = 0
         for agent in self.team2:
             if agent.isAlive:
@@ -305,100 +377,19 @@ class CapEnv(gym.Env):
         reward = self.create_reward()
         if reward <= -1:
             reward = -1
-            game_lost = True
+            self.game_lost = True
 
         self.create_observation_space(BLUE)
         # self.create_observation_space(RED)
         # self.state = self.observation_space
         self.state = self.observation_space
 
-        # TODO game over
         isDone = False
         if self.game_won or self.game_lost:
             isDone = True
         info = {}
-        # if self.game_won:
-        # print("YOU'RE A WINNER!")
-        # if self.game_lost:
-        # print("YOU'RE A LOSER!")
 
         return self.state, reward, isDone, info
-
-    def _reset(self, map_size=None, in_seed=None, mode=None):
-        """
-        Resets the game
-
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-
-        Returns
-        -------
-        state    : object
-            CapEnv object
-        """
-        if map_size == None:
-            self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=4)
-        else:
-            self._env = CreateMap.gen_map('map', map_size)
-
-        self.map_size = (len(self._env), len(self._env[0]))
-        self.team_home = self._env.copy()
-
-        self.team1 = []
-        self.team2 = []
-        for y in range(len(self._env)):
-            for x in range(len(self._env[0])):
-                if self._env[x][y] == TEAM1_UGV:
-                    cur_ent = GroundVehicle((x, y), self.team_home, 1)
-                    self.team1.insert(0, cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM1_UAV:
-                    cur_ent = AerialVehicle((x, y), self.team_home, 1)
-                    self.team1.append(cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM2_UGV:
-                    cur_ent = GroundVehicle((x, y), self.team_home, 2)
-                    self.team2.insert(0, cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-                elif self._env[x][y] == TEAM2_UAV:
-                    cur_ent = AerialVehicle((x, y), self.team_home, 2)
-                    self.team2.append(cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-
-        # print(DataFrame(self._env))
-        # place arial units at end of list
-        for i in range(len(self.team1)):
-            if self.team1[i].air:
-                self.team1.insert(len(self.team1), self.team1.pop(i))
-        for i in range(len(self.team2)):
-            if self.team2[i].air:
-                self.team2.insert(len(self.team2) - 1, self.team2.pop(i))
-
-        self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
-
-        self.game_lost = False
-        self.game_won = False
-
-        self.create_observation_space(RED)
-        self.create_observation_space(BLUE)
-        self.state = self.observation_space
-        self.cap_view = CaptureView2D(screen_size=(500, 500))
-        self.viewer = None
-        if not mode == None:
-            self.mode = mode
-
-        self.game_lost = False
-        self.game_won = False
-        self.cur_step = 0
-
-        # Necessary for human mode
-        self.first = True
-
-        self._seed()
-
-        return self.state
 
     def render(self, mode="human"):
         """
@@ -470,21 +461,53 @@ class CapEnv(gym.Env):
             self.viewer = None
 
 
-# Different environment sizes
-class CapEnvGenerate20x20(CapEnv):
-    def __init__(self):
-        super(CapEnvGenerate20x20, self).__init__(map_size=20)
+# Different environment sizes and modes
+# Random modes
+class CapEnvGenerate20x20Random(CapEnv):
+    def __init__(self, mode="random"):
+        super(CapEnvGenerate20x20Random, self).__init__(map_size=20, mode=mode)
 
 
-class CapEnvGenerate100x100(CapEnv):
-    def __init__(self):
-        super(CapEnvGenerate100x100, self).__init__(map_size=100)
+class CapEnvGenerate100x100Random(CapEnv):
+    def __init__(self, mode="random"):
+        super(CapEnvGenerate100x100Random, self).__init__(map_size=100, mode=mode)
 
 
-class CapEnvGenerate500x500(CapEnv):
-    def __init__(self):
-        super(CapEnvGenerate500x500, self).__init__(map_size=500)
+class CapEnvGenerate500x500Random(CapEnv):
+    def __init__(self, mode="random"):
+        super(CapEnvGenerate500x500Random, self).__init__(map_size=500, mode=mode)
 
+
+# Human modes
+class CapEnvGenerate20x20Human(CapEnv):
+    def __init__(self, mode="human"):
+        super(CapEnvGenerate20x20Human, self).__init__(map_size=20, mode=mode)
+
+
+class CapEnvGenerate100x100Human(CapEnv):
+    def __init__(self, mode="human"):
+        super(CapEnvGenerate100x100Human, self).__init__(map_size=100, mode=mode)
+
+
+class CapEnvGenerate500x500Human(CapEnv):
+    def __init__(self, mode="human"):
+        super(CapEnvGenerate500x500Human, self).__init__(map_size=500, mode=mode)
+
+
+# Sandbox modes
+class CapEnvGenerate20x20Sandbox(CapEnv):
+    def __init__(self, mode="sandbox"):
+        super(CapEnvGenerate20x20Sandbox, self).__init__(map_size=20, mode=mode)
+
+
+class CapEnvGenerate100x100Sandbox(CapEnv):
+    def __init__(self, mode="sandbox"):
+        super(CapEnvGenerate100x100Sandbox, self).__init__(map_size=100, mode=mode)
+
+
+class CapEnvGenerate500x500Sandbox(CapEnv):
+    def __init__(self, mode="sandbox"):
+        super(CapEnvGenerate500x500Sandbox, self).__init__(map_size=500, mode=mode)
 # DEBUGGING
 # if __name__ == "__main__":
 # cap_env = CapEnv(env_matrix_file="ctf_samples/cap2d_000.npy")
