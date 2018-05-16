@@ -1,9 +1,8 @@
+import sys
+
 import pygame
-import random
-import numpy as np
-import os
+
 from .const import *
-from pandas import *
 
 QUIT = 12
 
@@ -21,8 +20,8 @@ class CaptureView2D:
         self.__screen_size = screen_size
 
     def update_env(self, env):
-        if self.screen == None:
-            if (len(env) != len(env[0])):
+        if self.screen is None:
+            if len(env) != len(env[0]):
                 self.__screen_size = (int(self.__screen_size[1] * (len(env) / len(env[0]))), self.__screen_size[1])
             self.screen = pygame.display.set_mode(self.__screen_size)
         tile_w = self.SCREEN_W / len(env)
@@ -115,13 +114,6 @@ class CaptureView2D:
                                              [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
                         i += 1
         return move_list
-
-    def quit_game(self):
-        try:
-            pygame.display.quit()
-            pygame.quit()
-        except Exception:
-            pass
 
     @property
     def SCREEN_SIZE(self):
