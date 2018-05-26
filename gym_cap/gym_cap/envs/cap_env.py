@@ -23,7 +23,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="random"):
+    def __init__(self, map_size=20, mode="random", in_seed=None):
         """
         Constructor
 
@@ -32,7 +32,8 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        self._reset(map_size, mode=mode)
+        self.seed = None
+        self._reset(map_size, in_seed=4, mode=mode)
 
     def _reset(self, map_size=None, in_seed=None, mode=None):
         """
@@ -48,10 +49,15 @@ class CapEnv(gym.Env):
         state    : object
             CapEnv object
         """
+        # If seed not defined, define it
+        # If in_seed is not None, set seed to its value
+        if in_seed is not None or self.in_seed is None:
+            self.in_seed = in_seed
+
         if map_size is None:
-            self._env = CreateMap.gen_map('map', dim=self.map_size[0])
+            self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=self.in_seed)
         else:
-            self._env = CreateMap.gen_map('map', map_size)
+            self._env = CreateMap.gen_map('map', map_size, in_seed=self.in_seed)
 
         self.map_size = (len(self._env), len(self._env[0]))
         self.team_home = self._env.copy()
@@ -112,7 +118,7 @@ class CapEnv(gym.Env):
 
     def create_reward(self):
         """
-        Range (-1, 1)
+        Range (-100, 100)
 
         Parameters
         ----------
@@ -129,26 +135,60 @@ class CapEnv(gym.Env):
         # Dead enemy team gives .5/total units for each dead unit
         for i in range(len(self.team2)):
             if not self.team2[i].isAlive:
-                reward += (.5 / len(self.team2))
+                reward += (50.0 / len(self.team2))
         for i in range(len(self.team1)):
             if not self.team1[i].isAlive:
-                reward -= (.5 / len(self.team1))
+                reward -= (50.0 / len(self.team1))
 
         # 10,000 steps returns -.5
         # map_size_2 = map_size[0]*map_size[1]
         # reward-=(.5/map_size_2)
-        reward -= (.5 / 100) * self.cur_step
+        reward -= (50.0 / 1000) * self.cur_step
         if self.game_won:
-            reward += 1
-        if reward <= -1:
-            reward = -1
+            reward += 100
+        if reward <= -100:
+            reward = -100
             self.game_lost = True
+
         # if self.cur_step > 10000:
         # reward-=.5
         # else:
         # reward-=((self.cur_step/10000.0)*.5)
-
         return reward
+
+    def individual_reward(self):
+        # Small reward range [-1, 1]
+        all_small_obs = []
+        all_small_reward = []
+        for agent in self.team1:
+            lx, ly = agent.get_loc()
+            small_observation = [[-1 for i in range(2 * agent.range + 1)] for j in range(2 * agent.range + 1)]
+            small_reward = 0
+            for x in range(lx - agent.range, lx + agent.range + 1):
+                for y in range(ly - agent.range, ly + agent.range + 1):
+                    if ((x-lx) ** 2 + (y-ly) ** 2 <= agent.range ** 2) and \
+                            0 <= x < self.map_size[0] and \
+                            0 <= y < self.map_size[1]:
+                        small_observation[x - lx + agent.range][y - ly + agent.range] = self._env[x][y]
+                        # Max reward for finding red flag
+                        if self._env[x][y] == TEAM2_FLAG:
+                            small_reward = .5
+                        # Reward for UAV finding enemy wherever
+                        elif agent.air and self._env[x][y] == TEAM2_UGV:
+                            small_reward += .5/NUM_RED
+                        # Reward for finding a vulnerable enemy
+                        elif self._env[x][y] == TEAM2_UGV and \
+                                self.team_home[x][y] == TEAM1_BACKGROUND and \
+                                self.team_home[lx][ly] == TEAM1_BACKGROUND:
+                            small_reward += .5/NUM_RED
+                        # Neg Reward for finding an enemy when you're vulnerable
+                        elif self._env[x][y] == TEAM2_UGV and \
+                                self.team_home[x][y] == TEAM2_BACKGROUND and \
+                                self.team_home[lx][ly] == TEAM2_BACKGROUND:
+                            small_reward -= .5/NUM_BLUE
+            all_small_obs.append(small_observation)
+            all_small_reward.append(small_reward)
+        return all_small_obs, all_small_reward
 
     def create_observation_space(self, team=BLUE):
         """
@@ -375,14 +415,12 @@ class CapEnv(gym.Env):
             self.game_won = False
 
         reward = self.create_reward()
-        if reward <= -1:
-            reward = -1
-            self.game_lost = True
 
         self.create_observation_space(BLUE)
+        self.individual_reward()
         # self.create_observation_space(RED)
         # self.state = self.observation_space
-        self.state = self.observation_space
+        self.state = self._env
 
         isDone = False
         if self.game_won or self.game_lost:
