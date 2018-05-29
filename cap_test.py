@@ -40,14 +40,14 @@ while True:
         # obs = np.concatenate((observation, black_line, env._env))
         # env.cap_view.update_env(obs)
 
-        env.render(mode="obs")
+        env.render(mode="env")
         t += 1
         # if not t % 100:
         # print(t, info)
-        time.sleep(.5)
+        time.sleep(.05)
         if t == 100000:
             break
-    env.reset()
+    env.reset(in_seed=4)
     done = False
 
 # print("--- %s seconds ---" % (time.time() - start_time))

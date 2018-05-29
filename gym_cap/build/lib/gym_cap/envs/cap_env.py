@@ -32,8 +32,7 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        self.seed = None
-        self._reset(map_size, in_seed=4, mode=mode)
+        self._reset(map_size, mode=mode)
 
     def _reset(self, map_size=None, in_seed=None, mode=None):
         """
@@ -51,8 +50,7 @@ class CapEnv(gym.Env):
         """
         # If seed not defined, define it
         # If in_seed is not None, set seed to its value
-        if in_seed is not None or self.in_seed is None:
-            self.in_seed = in_seed
+        self.in_seed = in_seed
 
         if map_size is None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=self.in_seed)
