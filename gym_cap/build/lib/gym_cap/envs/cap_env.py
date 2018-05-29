@@ -161,28 +161,24 @@ class CapEnv(gym.Env):
             lx, ly = agent.get_loc()
             small_observation = [[-1 for i in range(2 * agent.range + 1)] for j in range(2 * agent.range + 1)]
             small_reward = 0
-            for x in range(lx - agent.range, lx + agent.range + 1):
-                for y in range(ly - agent.range, ly + agent.range + 1):
-                    if ((x-lx) ** 2 + (y-ly) ** 2 <= agent.range ** 2) and \
-                            0 <= x < self.map_size[0] and \
-                            0 <= y < self.map_size[1]:
-                        small_observation[x - lx + agent.range][y - ly + agent.range] = self._env[x][y]
-                        # Max reward for finding red flag
-                        if self._env[x][y] == TEAM2_FLAG:
-                            small_reward = .5
-                        # Reward for UAV finding enemy wherever
-                        elif agent.air and self._env[x][y] == TEAM2_UGV:
-                            small_reward += .5/NUM_RED
-                        # Reward for finding a vulnerable enemy
-                        elif self._env[x][y] == TEAM2_UGV and \
-                                self.team_home[x][y] == TEAM1_BACKGROUND and \
-                                self.team_home[lx][ly] == TEAM1_BACKGROUND:
-                            small_reward += .5/NUM_RED
-                        # Neg Reward for finding an enemy when you're vulnerable
-                        elif self._env[x][y] == TEAM2_UGV and \
-                                self.team_home[x][y] == TEAM2_BACKGROUND and \
-                                self.team_home[lx][ly] == TEAM2_BACKGROUND:
-                            small_reward -= .5/NUM_BLUE
+            if agent.air:
+                for x in range(lx - agent.range, lx + agent.range + 1):
+                    for y in range(ly - agent.range, ly + agent.range + 1):
+                        if ((x-lx) ** 2 + (y-ly) ** 2 <= agent.range ** 2) and \
+                                0 <= x < self.map_size[0] and \
+                                0 <= y < self.map_size[1]:
+                            small_observation[x - lx + agent.range][y - ly + agent.range] = self._env[x][y]
+                            # Max reward for finding red flag
+                            if self._env[x][y] == TEAM2_FLAG:
+                                small_reward = .5
+                            # Reward for UAV finding enemy wherever
+                            elif self._env[x][y] == TEAM2_UGV:
+                                small_reward += .5/NUM_RED
+            else:
+                if self._env[lx][ly] == TEAM2_FLAG:
+                    small_reward = 1
+                elif not agent.isAlive:
+                    small_reward = -1
             all_small_obs.append(small_observation)
             all_small_reward.append(small_reward)
         return all_small_obs, all_small_reward
