@@ -5,10 +5,10 @@ import gym_cap
 import numpy as np
 
 start_time = time.time()
-env = gym.make("capRandom-v0")
-# observation = env.reset(0)
+env = gym.make("cap-v0")
 done = False
 t = 0
+env.reset(map_size=10, in_seed=4)
 
 while True:
     while not done:
@@ -47,7 +47,7 @@ while True:
         time.sleep(.05)
         if t == 100000:
             break
-    env.reset(in_seed=4)
+    env.reset(map_size=100, mode="sandbox", in_seed=4)
     done = False
 
 # print("--- %s seconds ---" % (time.time() - start_time))

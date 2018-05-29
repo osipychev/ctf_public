@@ -34,7 +34,7 @@ class CapEnv(gym.Env):
         """
         self._reset(map_size, mode=mode)
 
-    def _reset(self, map_size=None, in_seed=None, mode=None):
+    def _reset(self, map_size=None, mode="random", in_seed=None):
         """
         Resets the game
 
@@ -100,8 +100,7 @@ class CapEnv(gym.Env):
         self.state = self.observation_space
         self.cap_view = CaptureView2D(screen_size=(500, 500))
         self.viewer = None
-        if not mode is None:
-            self.mode = mode
+        self.mode = mode
 
         self.game_lost = False
         self.game_won = False
@@ -499,51 +498,11 @@ class CapEnv(gym.Env):
 
 # Different environment sizes and modes
 # Random modes
-class CapEnvGenerate20x20Random(CapEnv):
-    def __init__(self, mode="random"):
-        super(CapEnvGenerate20x20Random, self).__init__(map_size=20, mode=mode)
+class CapEnvGenerate(CapEnv):
+    def __init__(self):
+        super(CapEnvGenerate, self).__init__(map_size=20)
 
 
-class CapEnvGenerate100x100Random(CapEnv):
-    def __init__(self, mode="random"):
-        super(CapEnvGenerate100x100Random, self).__init__(map_size=100, mode=mode)
-
-
-class CapEnvGenerate500x500Random(CapEnv):
-    def __init__(self, mode="random"):
-        super(CapEnvGenerate500x500Random, self).__init__(map_size=500, mode=mode)
-
-
-# Human modes
-class CapEnvGenerate20x20Human(CapEnv):
-    def __init__(self, mode="human"):
-        super(CapEnvGenerate20x20Human, self).__init__(map_size=20, mode=mode)
-
-
-class CapEnvGenerate100x100Human(CapEnv):
-    def __init__(self, mode="human"):
-        super(CapEnvGenerate100x100Human, self).__init__(map_size=100, mode=mode)
-
-
-class CapEnvGenerate500x500Human(CapEnv):
-    def __init__(self, mode="human"):
-        super(CapEnvGenerate500x500Human, self).__init__(map_size=500, mode=mode)
-
-
-# Sandbox modes
-class CapEnvGenerate20x20Sandbox(CapEnv):
-    def __init__(self, mode="sandbox"):
-        super(CapEnvGenerate20x20Sandbox, self).__init__(map_size=20, mode=mode)
-
-
-class CapEnvGenerate100x100Sandbox(CapEnv):
-    def __init__(self, mode="sandbox"):
-        super(CapEnvGenerate100x100Sandbox, self).__init__(map_size=100, mode=mode)
-
-
-class CapEnvGenerate500x500Sandbox(CapEnv):
-    def __init__(self, mode="sandbox"):
-        super(CapEnvGenerate500x500Sandbox, self).__init__(map_size=500, mode=mode)
 # DEBUGGING
 # if __name__ == "__main__":
 # cap_env = CapEnv(env_matrix_file="ctf_samples/cap2d_000.npy")
