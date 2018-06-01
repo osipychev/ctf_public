@@ -8,7 +8,7 @@ start_time = time.time()
 env = gym.make("cap-v0")
 done = False
 t = 0
-env.reset(map_size=20, mode="random", in_seed=4)
+env.reset(map_size=20, mode="human_blue", in_seed=4, model_name="pg_model_123500_env.p")
 
 while True:
     while not done:
@@ -47,7 +47,7 @@ while True:
         time.sleep(.05)
         if t == 100000:
             break
-    env.reset(map_size=20, mode="random", in_seed=4)
+    env.reset(map_size=20, mode="human_blue", in_seed=4, model_name="pg_model_123500_env.p")
     done = False
 
 # print("--- %s seconds ---" % (time.time() - start_time))
