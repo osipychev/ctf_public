@@ -14,4 +14,5 @@ gym_cap/envs/const.py
 gym_cap/envs/create_map.py
 gym_cap/envs/enemy_ai.py
 gym_cap/envs/heuristic.py
+gym_cap/envs/predict.py
 gym_cap/envs/ctf_samples/cap2d_000.npy

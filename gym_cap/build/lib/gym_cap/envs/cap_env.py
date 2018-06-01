@@ -10,6 +10,7 @@ from .agent import *
 from .enemy_ai import EnemyAI
 from .cap_view2d import CaptureView2D
 from .create_map import CreateMap
+from .predict import *
 
 """
 Requires that all units initially exist in home zone.
@@ -34,7 +35,7 @@ class CapEnv(gym.Env):
         """
         self._reset(map_size, mode=mode)
 
-    def _reset(self, map_size=None, mode="random", in_seed=None):
+    def _reset(self, map_size=None, mode="random", in_seed=None, model_name=""):
         """
         Resets the game
 
@@ -50,6 +51,10 @@ class CapEnv(gym.Env):
         """
         # If seed not defined, define it
         # If in_seed is not None, set seed to its value
+
+        if model_name != "":
+            self.model = load_model(model_name)
+
         self.in_seed = in_seed
 
         if map_size is None:
@@ -324,10 +329,6 @@ class CapEnv(gym.Env):
                          There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
             move_list = entities_action
 
-        # TODO
-        # Get team2 actions from heuristic function
-        # team2_actions = generate_actions()
-
         # Move team2
         team2_actions = 0
         if self.mode == "run_away":
@@ -351,7 +352,17 @@ class CapEnv(gym.Env):
             team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
         elif self.mode == "human":
             self._render("env")
-            team2_actions = self.cap_view.human_move(self._env, self.team2)
+            team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, self.model)
+        elif self.mode == "human_blue":
+            for i in range(len(self.team2)):
+                locx, locy = self.team2[i].get_loc()
+                if self.team2[i].atHome:
+                    self._env[locx][locy] = TEAM2_BACKGROUND
+                else:
+                    self._env[locx][locy] = TEAM1_BACKGROUND
+            self.team2 = []
+            self._render("env")
+            move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, self.model)
 
         # Move team1
         for i in range(len(self.team1)):
@@ -392,7 +403,7 @@ class CapEnv(gym.Env):
                 if self.team_home[locx][locy] == TEAM1_FLAG:
                     self.game_lost = True
 
-        if not has_alive_entity and self.mode != "sandbox":
+        if not has_alive_entity and self.mode != "sandbox" and self.mode != "human_blue":
             self.game_won = True
             self.game_lost = False
         has_alive_entity = False
@@ -420,6 +431,7 @@ class CapEnv(gym.Env):
             isDone = True
         info = {}
 
+        print(self.team1[0].get_loc())
         return self.state, reward, isDone, info
 
     def render(self, mode="human"):
@@ -481,6 +493,7 @@ class CapEnv(gym.Env):
         elif mode == "obs":
             self.cap_view.update_env(self.observation_space)
         elif mode == "obs2":
+            # rl_suggestions = predict_move()
             self.cap_view.update_env(self.observation_space2)
         elif mode == "team":
             self.cap_view.update_env(self.team_home)
