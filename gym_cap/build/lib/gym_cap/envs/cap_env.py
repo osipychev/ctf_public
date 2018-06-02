@@ -403,6 +403,7 @@ class CapEnv(gym.Env):
                 if self.team_home[locx][locy] == TEAM1_FLAG:
                     self.game_lost = True
 
+        # TODO Change last condition for multi agent model
         if not has_alive_entity and self.mode != "sandbox" and self.mode != "human_blue":
             self.game_won = True
             self.game_lost = False
@@ -431,7 +432,6 @@ class CapEnv(gym.Env):
             isDone = True
         info = {}
 
-        print(self.team1[0].get_loc())
         return self.state, reward, isDone, info
 
     def render(self, mode="human"):

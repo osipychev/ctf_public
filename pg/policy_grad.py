@@ -21,8 +21,8 @@ env = gym.make('capSandbox-v0')
 
 gamma = 0.99
 LOAD_EPISODE = 49000
-LOAD_CHECKPOINT = True
-# LOAD_CHECKPOINT = False
+# LOAD_CHECKPOINT = True
+LOAD_CHECKPOINT = False
 
 
 def discount_rewards(r):
@@ -117,26 +117,20 @@ with tf.Session() as sess:
         #     exploration_rate -= .001
         # else:
         #     exploration_rate = 0
-        while not d:
+        while j <= 100:
             j += 1
-            if i % 100 == 0:
-                env.render(mode="env")
-                time.sleep(.01)
             # Probabilistically pick an action given our network outputs.
-            entropy = random.random()
             # if entropy > exploration_rate:
             a_dist = sess.run(myAgent.output, feed_dict={myAgent.state_in: [s]})
             a = np.random.choice(a_dist[0], p=a_dist[0])
             a = a_dist.argmax()
-            # else:
-            #     a = random.randint(0, 4)
+
+            env.render(mode="env")
+            time.sleep(.25)
+            print(a_dist[0], a)
 
             s1, r, d, _ = env.step(int(a))  # Get our reward for taking an action given a bandit.
-            if i % 100 == 0:
-                # if entropy > exploration_rate:
-                print(a, a_dist)
-                # else:
-                #     print(a, r, entropy)
+
             s1 = np.array(s1).flatten()
             ep_history.append([s, a, r, s1])
             s = s1

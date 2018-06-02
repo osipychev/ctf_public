@@ -432,7 +432,6 @@ class CapEnv(gym.Env):
             isDone = True
         info = {}
 
-        print(self.team1[0].get_loc())
         return self.state, reward, isDone, info
 
     def render(self, mode="human"):
