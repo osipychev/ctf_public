@@ -365,7 +365,7 @@ class CapEnv(gym.Env):
             move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, self.model)
 
         # Move team1
-        for i in range(len(self.team1)):
+        for i in range(len(move_list)):
             self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         # Allows for both an integer and a list input
@@ -380,7 +380,6 @@ class CapEnv(gym.Env):
         i = 0
         for agent in self.team2:
             if agent.isAlive:
-                agent.move_selected = False
                 agent.move(self.ACTION[move_list[i]], self._env, self.team_home)
                 i += 1
 
