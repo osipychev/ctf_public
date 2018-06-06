@@ -73,7 +73,7 @@ class CaptureView2D:
             if RL_SUGGESTIONS and move_suggestions is None:
                 model_env = self.prep_prediction(env, team_home, team_list, i)
                 move_suggestions: ndarray = predict_move(model_env, model)
-                print(move_suggestions)
+                # print(move_suggestions)
             selected = team_list[i].get_loc()
             if team_list[i].air:
                 pygame.draw.ellipse(self.screen, COLOR_DICT[SELECTED],
@@ -168,15 +168,16 @@ class CaptureView2D:
                         move_list.append(0)
 
                     if team_list[i].move_selected:
+                        team_list[i].move_selected = False
                         if team_list[i].air:
                             pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],
                                                 [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
                         else:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],
                                              [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
-                        i += 1
                         move_suggestions = None
                         self.update_env(env)
+                        i += 1
         return move_list
 
     def prep_prediction(self, env, team_home, team_list, i):
