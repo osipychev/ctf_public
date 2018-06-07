@@ -8,7 +8,7 @@ start_time = time.time()
 env = gym.make("cap-v0")
 done = False
 t = 0
-env.reset(map_size=20, mode="human_blue", in_seed=4, model_name="pg_model_123500_env.p")
+env.reset(map_size=20, mode="human_blue", in_seed=4, render_mode="obs")
 
 while True:
     while not done:
@@ -20,7 +20,11 @@ while True:
         # +(4)*(5**3) \
         # +(4)*(5**4) \
         # +(4)*(5**5)
-        observation, reward, done, info = env.step(action)  # feedback from environment
+        suggestions = [[0, 0, 0, 1, 0],
+                       [0, 0, 1, 0, 0],
+                       [0, 1, 0, 0, 0],
+                       [1, 0, 0, 0, 0]]
+        observation, reward, done, info = env.step(action, suggestions)  # feedback from environment
         # obs, obs2,  or env
 
         # for agent in env.team1:
@@ -40,14 +44,14 @@ while True:
         # obs = np.concatenate((observation, black_line, env._env))
         # env.cap_view.update_env(obs)
 
-        env.render(mode="env")
-        t += 1
+        env.render()
+        # t += 1
         # if not t % 100:
         # print(t, info)
         time.sleep(.05)
         if t == 100000:
             break
-    env.reset(map_size=20, mode="human_blue", in_seed=4, model_name="pg_model_123500_env.p")
+    env.reset(map_size=20, mode="human_blue", in_seed=4, render_mode="obs")
     done = False
 
 # print("--- %s seconds ---" % (time.time() - start_time))
