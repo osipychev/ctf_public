@@ -5,7 +5,6 @@ from numpy.core.multiarray import ndarray
 import numpy as np
 
 from .const import *
-from .predict import predict_move
 
 QUIT = 12
 
@@ -46,7 +45,7 @@ class CaptureView2D:
                     pygame.draw.rect(self.screen, cur_color, (x * tile_w, y * tile_h, tile_w, tile_h))
         pygame.display.update()
 
-    def human_move(self, env, team_home, team_list, model):
+    def human_move(self, env, team_home, team_list, move_suggestions):
         """
         Manual move controls
 
@@ -63,17 +62,12 @@ class CaptureView2D:
         tile_w = self.SCREEN_W / len(env)
         tile_h = self.SCREEN_H / len(env[0])
         i = 0
-        move_suggestions = None
         # Cycle through agents
         while i < len(team_list):
             if not team_list[i].isAlive:
                 i += 1
                 continue
             # Only suggest moves once
-            if RL_SUGGESTIONS and move_suggestions is None:
-                model_env = self.prep_prediction(env, team_home, team_list, i)
-                move_suggestions: ndarray = predict_move(model_env, model)
-                print(move_suggestions)
             selected = team_list[i].get_loc()
             if team_list[i].air:
                 pygame.draw.ellipse(self.screen, COLOR_DICT[SELECTED],
@@ -85,50 +79,50 @@ class CaptureView2D:
             if RL_SUGGESTIONS:
                 running_removed = 0
                 removed_predict = 0
-                for k in range(len(move_suggestions)):
-                    if move_suggestions[k] < .15:
-                        running_removed += move_suggestions[k]
-                        move_suggestions[k] = 0
+                for k in range(len(move_suggestions[i])):
+                    if move_suggestions[i][k] < .15:
+                        running_removed += move_suggestions[i][k]
+                        move_suggestions[i][k] = 0
                         removed_predict += 1
                 # Add removed probabilities to other options
                 added_prob = running_removed / removed_predict
-                for j in range(len(move_suggestions)):
+                for j in range(len(move_suggestions[i])):
                     if j == 0:
-                        if move_suggestions[j] == 0:
+                        if move_suggestions[i][j] == 0:
                             continue
-                        radius = int(tile_w / 2.0 * (move_suggestions[j]) ** .5)
+                        radius = int(tile_w / 2.0 * (move_suggestions[i][j]) ** .5)
                         pygame.draw.circle(self.screen, COLOR_DICT[SUGGESTION],
                                            (int(selected[0] * tile_w + tile_w / 2),
                                             int(selected[1] * tile_h + tile_h / 2)),
                                            radius)
                     elif j == 1 and selected[1] > 0:
-                        if move_suggestions[j] == 0:
+                        if move_suggestions[i][j] == 0:
                             continue
-                        radius = int(tile_w / 2.0 * (move_suggestions[j]) ** .5)
+                        radius = int(tile_w / 2.0 * (move_suggestions[i][j]) ** .5)
                         pygame.draw.circle(self.screen, COLOR_DICT[SUGGESTION],
                                            (int(selected[0] * tile_w + tile_w / 2),
                                             int((selected[1] - 1) * tile_h + tile_h / 2)),
                                            radius)
                     elif j == 2 and selected[0] < len(env) - 1:
-                        if move_suggestions[j] == 0:
+                        if move_suggestions[i][j] == 0:
                             continue
-                        radius = int(tile_w / 2.0 * (move_suggestions[j]) ** .5)
+                        radius = int(tile_w / 2.0 * (move_suggestions[i][j]) ** .5)
                         pygame.draw.circle(self.screen, COLOR_DICT[SUGGESTION],
                                            (int((selected[0] + 1) * tile_w + tile_w / 2),
                                             int(selected[1] * tile_h + tile_h / 2)),
                                            radius)
                     elif j == 3 and selected[1] < len(env[0]) - 1:
-                        if move_suggestions[j] == 0:
+                        if move_suggestions[i][j] == 0:
                             continue
-                        radius = int(tile_w / 2.0 * (move_suggestions[j]) ** .5)
+                        radius = int(tile_w / 2.0 * (move_suggestions[i][j]) ** .5)
                         pygame.draw.circle(self.screen, COLOR_DICT[SUGGESTION],
                                            (int(selected[0] * tile_w + tile_w / 2),
                                             int((selected[1] + 1) * tile_h + tile_h / 2)),
                                            radius)
                     elif j == 4 and selected[0] > 0:
-                        if move_suggestions[j] == 0:
+                        if move_suggestions[i][j] == 0:
                             continue
-                        radius = int(tile_w / 2.0 * (move_suggestions[j]) ** .5)
+                        radius = int(tile_w / 2.0 * (move_suggestions[i][j]) ** .5)
                         pygame.draw.circle(self.screen, COLOR_DICT[SUGGESTION],
                                            (int((selected[0] - 1) * tile_w + tile_w / 2),
                                             int(selected[1] * tile_h + tile_h / 2)),
@@ -168,15 +162,15 @@ class CaptureView2D:
                         move_list.append(0)
 
                     if team_list[i].move_selected:
+                        team_list[i].move_selected = False
                         if team_list[i].air:
                             pygame.draw.ellipse(self.screen, COLOR_DICT[COMPLETED],
                                                 [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
                         else:
                             pygame.draw.rect(self.screen, COLOR_DICT[COMPLETED],
                                              [selected[0] * tile_w, selected[1] * tile_h, tile_w, tile_h])
-                        i += 1
-                        move_suggestions = None
                         self.update_env(env)
+                        i += 1
         return move_list
 
     def prep_prediction(self, env, team_home, team_list, i):
