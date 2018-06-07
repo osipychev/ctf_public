@@ -27,7 +27,7 @@ D = 20 * 20  # input dimensionality
 K = 5  # output dimensionality
 
 if RESUME:
-    model = pickle.load(open('/Users/Zach/Projects/missionplanner/pg/pg_05_30/pg_model_123500_env.p', 'rb'))
+    model = pickle.load(open('save.p', 'rb'))
 else:
     model = {}
     model['W1'] = np.random.randn(H, D) / np.sqrt(D)  # "Xavier" initialization
