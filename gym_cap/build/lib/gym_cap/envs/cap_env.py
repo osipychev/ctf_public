@@ -33,7 +33,7 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        self._reset(map_size, mode=mode)
+        self._reset(map_size, mode=mode, in_seed=in_seed)
 
     def _reset(self, map_size=None, mode="random", in_seed=None, model_name=""):
         """
@@ -351,7 +351,8 @@ class CapEnv(gym.Env):
         elif self.mode == "random":
             team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
         elif self.mode == "human":
-            self._render("env")
+            #self._render("env")
+            self._render()
             team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, self.model)
         elif self.mode == "human_blue":
             for i in range(len(self.team2)):
@@ -361,7 +362,8 @@ class CapEnv(gym.Env):
                 else:
                     self._env[locx][locy] = TEAM1_BACKGROUND
             self.team2 = []
-            self._render("env")
+            self._render()
+            #self._render("env")
             move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, self.model)
 
         # Move team1
@@ -434,47 +436,47 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    def render(self, mode="human"):
-        """
-        Renders the screen options="obs, env"
-
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        mode    : string
-            Defines what will be rendered
-        """
-        SCREEN_W = 800
-        SCREEN_H = 800
-        env = self._env
-
-        from gym.envs.classic_control import rendering
-        if self.viewer is None:
-            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
-            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
-
-        tile_w = SCREEN_W / len(env)
-        tile_h = SCREEN_H / len(env[0])
-        map_h = len(env[0])
-        map_w = len(env)
-
-        self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
-
-        for row in range(map_h):
-            for col in range(map_w):
-                cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
-                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
-                    self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
-                else:
-                    self.viewer.draw_polygon([
-                        (col * tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h + tile_h),
-                        (col * tile_w, row * tile_h + tile_h)], color=cur_color)
-
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
-        # print(self._env)
+#    def render(self, mode="human"):
+#        """
+#        Renders the screen options="obs, env"
+#
+#        Parameters
+#        ----------
+#        self    : object
+#            CapEnv object
+#        mode    : string
+#            Defines what will be rendered
+#        """
+#        SCREEN_W = 800
+#        SCREEN_H = 800
+#        env = self._env
+#
+#        from gym.envs.classic_control import rendering
+#        if self.viewer is None:
+#            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+#            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+#
+#        tile_w = SCREEN_W / len(env)
+#        tile_h = SCREEN_H / len(env[0])
+#        map_h = len(env[0])
+#        map_w = len(env)
+#
+#        self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
+#
+#        for row in range(map_h):
+#            for col in range(map_w):
+#                cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
+#                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+#                    self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
+#                else:
+#                    self.viewer.draw_polygon([
+#                        (col * tile_w, row * tile_h),
+#                        (col * tile_w + tile_w, row * tile_h),
+#                        (col * tile_w + tile_w, row * tile_h + tile_h),
+#                        (col * tile_w, row * tile_h + tile_h)], color=cur_color)
+#
+#        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+#        # print(self._env)
 
     def _render(self, mode="obs", close=False):
         """

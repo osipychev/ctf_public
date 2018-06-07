@@ -1,28 +1,28 @@
-name: missionplanner
+name: ctf
 channels:
 - defaults
 dependencies:
 - certifi=2018.1.18=py36_0
-- libcxx=4.0.1=h579ed51_0
-- libcxxabi=4.0.1=hebd6815_0
-- libedit=3.1=hb4e282d_0
-- libffi=3.2.1=h475c297_4
-- ncurses=6.0=hd04f020_2
-- openssl=1.0.2n=hdbc3d79_0
-- pip=9.0.1=py36h1555ced_4
-- python=3.6.4=hc167b69_1
-- readline=7.0=hc1231fa_4
-- setuptools=38.4.0=py36_0
-- sqlite=3.22.0=h3efe00b_0
-- tk=8.6.7=h35a86e2_3
-- wheel=0.30.0=py36h5eb2c71_1
-- xz=5.2.3=h0278029_2
-- zlib=1.2.11=hf3cbc9b_2
+- libcxx=4.0.1
+- libcxxabi=4.0.1
+- libedit=3.1
+- libffi=3.2.1
+- ncurses=6.0
+- openssl=1.0.2n
+- pip=9.0.1
+- python=3.6.4
+- readline=7.0
+- setuptools=38.4.0
+- sqlite=3.22.0
+- tk=8.6.7
+- wheel=0.30.0
+- xz=5.2.3
+- zlib=1.2.11
 - pip:
   - chardet==3.0.4
   - future==0.16.0
   - gym==0.9.7
-  - gym-cap==0.2
+  - pandas=0.23.0
   - idna==2.6
   - numpy==1.14.0
   - pygame==1.9.3
@@ -30,5 +30,4 @@ dependencies:
   - requests==2.18.4
   - six==1.11.0
   - urllib3==1.22
-prefix: ~/miniconda3/envs/missionplanner
 
