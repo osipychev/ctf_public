@@ -13,6 +13,7 @@ policy_blue = policy.patrol.PolicyGen(env.team_home)
 
 done = False
 t = 0
+
 observation = env.reset(map_size=20, mode="random")
 
 while True:

@@ -35,27 +35,21 @@ class CapEnv(gym.Env):
         """
         self._reset(map_size, mode=mode)
 
-    def _reset(self, map_size=None, mode="random", in_seed=None, model_name=""):
+    def _reset(self, map_size=None, mode="random", in_seed=None, render_mode="env"):
         """
         Resets the game
 
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
+        :param map_size: Size of the map
+        :param mode: Action generation mode
+        :param in_seed: Seed for map
+        :param render_mode: what to render
+        :return: void
 
-        Returns
-        -------
-        state    : object
-            CapEnv object
         """
         # If seed not defined, define it
         # If in_seed is not None, set seed to its value
-
-        if model_name != "":
-            self.model = load_model(model_name)
-
         self.in_seed = in_seed
+        self.render_mode = render_mode
 
         if map_size is None:
             self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=self.in_seed)
@@ -289,28 +283,37 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action):
+    def _step(self, entities_action, cur_suggestions=None):
         """
         Takes one step in the cap the flag game
 
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        entities_action  : list
-            contains actions for entity 1-n
 
-        Returns
-        -------
-        state    : object
+
+        :param
+            entities_action: contains actions for entity 1-n
+            cur_suggestions: suggestions from rl to human
+        :return:
+            state    : object
             CapEnv object
-        reward  : float
+            reward  : float
             float containing the reward for the given action
-        isDone  : bool
+            isDone  : bool
             decides if the game is over
-        info    :
-            Not sure TODO
+            info    :
         """
+
+        if RL_SUGGESTIONS and cur_suggestions is None:
+            sys.exit("No suggestions provided to step function.\n" +
+                     "Train a model then submit a list of probabilities [0, 1].")
+        if not len(cur_suggestions) == NUM_BLUE+NUM_UAV:
+            sys.exit("Invalid number of suggestions. " + str(len(cur_suggestions)) + " suggested," +
+                     "but there are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+
+        for i in cur_suggestions:
+            for j in i:
+                if not 0 <= j <= 1:
+                    sys.exit("RL suggestions outside of required range. [0, 1]")
+
         # print(DataFrame(self._env))
         self.cur_step += 1
         move_list = []
@@ -351,8 +354,13 @@ class CapEnv(gym.Env):
         elif self.mode == "random":
             team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
         elif self.mode == "human":
-            self._render("env")
-            team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, self.model)
+            self._render()
+            if self.render_mode == "env":
+                team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, cur_suggestions, cur_suggestions)
+            elif self.render_mode == "obs2":
+                team2_actions = self.cap_view.human_move(self.observation_space2, self.team_home, self.team2, cur_suggestions, cur_suggestions)
+            else:
+                sys.exit("Enter a valid render mode for suggestions.")
         elif self.mode == "human_blue":
             for i in range(len(self.team2)):
                 locx, locy = self.team2[i].get_loc()
@@ -361,11 +369,16 @@ class CapEnv(gym.Env):
                 else:
                     self._env[locx][locy] = TEAM1_BACKGROUND
             self.team2 = []
-            self._render("env")
-            move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, self.model)
+            self._render()
+            if self.render_mode == "env":
+                move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, cur_suggestions)
+            elif self.render_mode == "obs":
+                move_list = self.cap_view.human_move(self.observation_space, self.team_home, self.team1, cur_suggestions)
+            else:
+                sys.exit("Enter a valid render mode for suggestions.")
 
         # Move team1
-        for i in range(len(self.team1)):
+        for i in range(len(move_list)):
             self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
 
         # Allows for both an integer and a list input
@@ -380,7 +393,6 @@ class CapEnv(gym.Env):
         i = 0
         for agent in self.team2:
             if agent.isAlive:
-                agent.move_selected = False
                 agent.move(self.ACTION[move_list[i]], self._env, self.team_home)
                 i += 1
 
@@ -434,72 +446,67 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    def render(self, mode="human"):
+    # def render(self):
+    #     """
+    #     Renders the screen options="obs, env"
+    #
+    #     Parameters
+    #     ----------
+    #     self    : object
+    #         CapEnv object
+    #     mode    : string
+    #         Defines what will be rendered
+    #     """
+    #     SCREEN_W = 800
+    #     SCREEN_H = 800
+    #     env = self._env
+    #
+    #     from gym.envs.classic_control import rendering
+    #     if self.viewer is None:
+    #         self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+    #         self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+    #
+    #     tile_w = SCREEN_W / len(env)
+    #     tile_h = SCREEN_H / len(env[0])
+    #     map_h = len(env[0])
+    #     map_w = len(env)
+    #
+    #     self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
+    #
+    #     for row in range(map_h):
+    #         for col in range(map_w):
+    #             cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
+    #             if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+    #                 self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
+    #             else:
+    #                 self.viewer.draw_polygon([
+    #                     (col * tile_w, row * tile_h),
+    #                     (col * tile_w + tile_w, row * tile_h),
+    #                     (col * tile_w + tile_w, row * tile_h + tile_h),
+    #                     (col * tile_w, row * tile_h + tile_h)], color=cur_color)
+    #
+    #     return self.viewer.render(return_rgb_array == 'rgb_array')
+    #     # print(self._env)
+
+    def _render(self):
         """
-        Renders the screen options="obs, env"
+        Renders the screen options="obs, env, obs2, team"
 
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        mode    : string
-            Defines what will be rendered
+        :param close: If window should be closed
+        :return:
         """
-        SCREEN_W = 800
-        SCREEN_H = 800
-        env = self._env
-
-        from gym.envs.classic_control import rendering
-        if self.viewer is None:
-            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
-            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
-
-        tile_w = SCREEN_W / len(env)
-        tile_h = SCREEN_H / len(env[0])
-        map_h = len(env[0])
-        map_w = len(env)
-
-        self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
-
-        for row in range(map_h):
-            for col in range(map_w):
-                cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
-                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
-                    self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
-                else:
-                    self.viewer.draw_polygon([
-                        (col * tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h + tile_h),
-                        (col * tile_w, row * tile_h + tile_h)], color=cur_color)
-
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
-        # print(self._env)
-
-    def _render(self, mode="obs", close=False):
-        """
-        Renders the screen options="obs, env"
-        Parameters
-        ----------
-        self    : object
-            CapEnv object
-        mode    : string
-            Defines what will be rendered
-        """
-        if close:
-            self.cap_view.quit_game()
-        if mode == "env":
+        if self.render_mode == "env":
             self.cap_view.update_env(self._env)
-        elif mode == "obs":
+        elif self.render_mode == "obs":
             self.cap_view.update_env(self.observation_space)
-        elif mode == "obs2":
+        elif self.render_mode == "obs2":
             # rl_suggestions = predict_move()
             self.cap_view.update_env(self.observation_space2)
-        elif mode == "team":
+        elif self.render_mode == "team":
             self.cap_view.update_env(self.team_home)
         return
 
-    def close(self):
+    def quit_game(self):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
