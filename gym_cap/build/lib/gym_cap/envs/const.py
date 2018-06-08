@@ -17,7 +17,7 @@ UAV_A_RANGE = 0
 UGV_A_RANGE = 2
 
 # Model
-RL_SUGGESTIONS = True
+RL_SUGGESTIONS = False
 
 
 # MapConst
