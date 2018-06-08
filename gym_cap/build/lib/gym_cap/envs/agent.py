@@ -194,6 +194,36 @@ class Agent:
         else:
             print("error: wrong action selected")
 
+    def individual_reward(self, env):
+        """
+        Generates reward for individual
+        :param self:
+        :return:
+        """
+        # Small reward range [-1, 1]
+        lx, ly = self.get_loc()
+        small_observation = [[-1 for i in range(2 * self.range + 1)] for j in range(2 * self.range + 1)]
+        small_reward = 0
+        if self.air:
+            for x in range(lx - self.range, lx + self.range + 1):
+                for y in range(ly - self.range, ly + self.range + 1):
+                    if ((x - lx) ** 2 + (y - ly) ** 2 <= self.range ** 2) and \
+                            0 <= x < self.map_size[0] and \
+                            0 <= y < self.map_size[1]:
+                        small_observation[x - lx + self.range][y - ly + self.range] = self._env[x][y]
+                        # Max reward for finding red flag
+                        if env[x][y] == TEAM2_FLAG:
+                            small_reward = .5
+                        # Reward for UAV finding enemy wherever
+                        elif env[x][y] == TEAM2_UGV:
+                            small_reward += .5 / NUM_RED
+        else:
+            if env[lx][ly] == TEAM2_FLAG:
+                small_reward = 1
+            elif not self.isAlive:
+                small_reward = -1
+        return small_reward
+
     def get_loc(self):
         return self.x, self.y
 

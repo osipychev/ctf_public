@@ -32,3 +32,4 @@ while True:
     env.reset()
     done = False
     print("--- %s seconds ---" % (time.time() - start_time))
+
