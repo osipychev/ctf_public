@@ -35,7 +35,7 @@ class CapEnv(gym.Env):
         """
         self._reset(map_size, mode=mode)
 
-    def _reset(self, map_size=None, mode="random", in_seed=None, render_mode="env"):
+    def _reset(self, map_size=None, mode="random", in_seed=None, render_mode="env", policy_blue=None, policy_red=None):
         """
         Resets the game
 
@@ -61,6 +61,9 @@ class CapEnv(gym.Env):
 
         self.team1 = []
         self.team2 = []
+        self.policy_blue = policy_blue
+        self.policy_red = policy_red
+        
         for y in range(len(self._env)):
             for x in range(len(self._env[0])):
                 if self._env[x][y] == TEAM1_UGV:
@@ -253,7 +256,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action, cur_suggestions=None):
+    def _step(self, entities_action=None, cur_suggestions=None):
         """
         Takes one step in the cap the flag game
 
@@ -272,99 +275,109 @@ class CapEnv(gym.Env):
             info    :
         """
 
-        if RL_SUGGESTIONS and cur_suggestions is None:
-            sys.exit("No suggestions provided to step function.\n" +
-                     "Train a model then submit a list of probabilities [0, 1].")
-        if not len(cur_suggestions) == NUM_BLUE+NUM_UAV:
-            sys.exit("Invalid number of suggestions. " + str(len(cur_suggestions)) + " suggested," +
-                     "but there are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-
-        for i in cur_suggestions:
-            for j in i:
-                if not 0 <= j <= 1:
-                    sys.exit("RL suggestions outside of required range. [0, 1]")
+#        if RL_SUGGESTIONS and cur_suggestions is None:
+#            sys.exit("No suggestions provided to step function.\n" +
+#                     "Train a model then submit a list of probabilities [0, 1].")
+#        if not len(cur_suggestions) == NUM_BLUE+NUM_UAV:
+#            sys.exit("Invalid number of suggestions. " + str(len(cur_suggestions)) + " suggested," +
+#                     "but there are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+#
+#        for i in cur_suggestions:
+#            for j in i:
+#                if not 0 <= j <= 1:
+#                    sys.exit("RL suggestions outside of required range. [0, 1]")
 
         # print(DataFrame(self._env))
         self.cur_step += 1
         move_list = []
 
         # ERROR checking
-        if type(entities_action) is int:
-            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
-                sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-            while len(move_list) < (NUM_BLUE + NUM_UAV):
-                move_list.append(entities_action % 5)
-                entities_action = int(entities_action / 5)
-        else:
-            if len(entities_action) > NUM_BLUE + NUM_UAV:
-                sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-            move_list = entities_action
+#        if type(entities_action) is int:
+#            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
+#                sys.exit("ERROR: You entered too many moves. \
+#                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+#            while len(move_list) < (NUM_BLUE + NUM_UAV):
+#                move_list.append(entities_action % 5)
+#                entities_action = int(entities_action / 5)
+#        else:
+#            if len(entities_action) > NUM_BLUE + NUM_UAV:
+#                sys.exit("ERROR: You entered too many moves. \
+#                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+#            move_list = entities_action
 
-        # Move team2
-        team2_actions = 0
-        if self.mode == "run_away":
-            team2_actions = generate_run_actions()
-        elif self.mode == "defend":
-            team2_actions = EnemyAI.patrol(self.team2)
-        elif self.mode == "attack":
-            team2_actions = self.action_space.sample()
-        elif self.mode == "sandbox":
-            for i in range(len(self.team2)):
-                locx, locy = self.team2[i].get_loc()
-                if self.team2[i].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-            self.team2 = []
-        elif self.mode == "patrol":
-            for agent in self.team2:
-                team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
-        elif self.mode == "random":
-            team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
-        elif self.mode == "human":
-            self._render()
-            if self.render_mode == "env":
-                team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, cur_suggestions, cur_suggestions)
-            elif self.render_mode == "obs2":
-                team2_actions = self.cap_view.human_move(self.observation_space2, self.team_home, self.team2, cur_suggestions, cur_suggestions)
-            else:
-                sys.exit("Enter a valid render mode for suggestions.")
-        elif self.mode == "human_blue":
-            for i in range(len(self.team2)):
-                locx, locy = self.team2[i].get_loc()
-                if self.team2[i].atHome:
-                    self._env[locx][locy] = TEAM2_BACKGROUND
-                else:
-                    self._env[locx][locy] = TEAM1_BACKGROUND
-            self.team2 = []
-            self._render()
-            if self.render_mode == "env":
-                move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, cur_suggestions)
-            elif self.render_mode == "obs":
-                move_list = self.cap_view.human_move(self.observation_space, self.team_home, self.team1, cur_suggestions)
-            else:
-                sys.exit("Enter a valid render mode for suggestions.")
+#        # Move team2
+#        team2_actions = 0
+#        if self.mode == "run_away":
+#            team2_actions = generate_run_actions()
+#        elif self.mode == "defend":
+#            team2_actions = EnemyAI.patrol(self.team2)
+#        elif self.mode == "attack":
+#            team2_actions = self.action_space.sample()
+#        elif self.mode == "sandbox":
+#            for i in range(len(self.team2)):
+#                locx, locy = self.team2[i].get_loc()
+#                if self.team2[i].atHome:
+#                    self._env[locx][locy] = TEAM2_BACKGROUND
+#                else:
+#                    self._env[locx][locy] = TEAM1_BACKGROUND
+#            self.team2 = []
+#        elif self.mode == "patrol":
+#            for agent in self.team2:
+#                team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
+#        elif self.mode == "random":
+#            team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
+#        elif self.mode == "human":
+#            self._render()
+#            if self.render_mode == "env":
+#                team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, cur_suggestions, cur_suggestions)
+#            elif self.render_mode == "obs2":
+#                team2_actions = self.cap_view.human_move(self.observation_space2, self.team_home, self.team2, cur_suggestions, cur_suggestions)
+#            else:
+#                sys.exit("Enter a valid render mode for suggestions.")
+#        elif self.mode == "human_blue":
+#            for i in range(len(self.team2)):
+#                locx, locy = self.team2[i].get_loc()
+#                if self.team2[i].atHome:
+#                    self._env[locx][locy] = TEAM2_BACKGROUND
+#                else:
+#                    self._env[locx][locy] = TEAM1_BACKGROUND
+#            self.team2 = []
+#            self._render()
+#            if self.render_mode == "env":
+#                move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, cur_suggestions)
+#            elif self.render_mode == "obs":
+#                move_list = self.cap_view.human_move(self.observation_space, self.team_home, self.team1, cur_suggestions)
+#            else:
+#                sys.exit("Enter a valid render mode for suggestions.")
 
+
+        # Get actions from uploaded policies
+        move_list_blue = self.policy_blue.gen_action(self.team1,self.observation_space,free_map=self.team_home)
+        move_list_red = self.policy_red.gen_action(self.team2,self.observation_space2,free_map=self.team_home)
+
+        
         # Move team1
-        for i in range(len(move_list)):
-            self.team1[i].move(self.ACTION[move_list[i]], self._env, self.team_home)
+        for idx, act in enumerate(move_list_blue):
+            self.team1[idx].move(self.ACTION[act], self._env, self.team_home)
+            
+        # Move team2
+        for idx, act in enumerate(move_list_red):
+            self.team2[idx].move(self.ACTION[act], self._env, self.team_home)
 
         # Allows for both an integer and a list input
-        move_list = []
-        if isinstance(team2_actions, int):
-            for i in range(len(self.team2)):
-                move_list.append(team2_actions % 5)
-                team2_actions = team2_actions // 5
-        else:
-            move_list = team2_actions
-
-        i = 0
-        for agent in self.team2:
-            if agent.isAlive:
-                agent.move(self.ACTION[move_list[i]], self._env, self.team_home)
-                i += 1
+#        move_list = []
+#        if isinstance(team2_actions, int):
+#            for i in range(len(self.team2)):
+#                move_list.append(team2_actions % 5)
+#                team2_actions = team2_actions // 5
+#        else:
+#            move_list = team2_actions
+#
+#        i = 0
+#        for agent in self.team2:
+#            if agent.isAlive:
+#                agent.move(self.ACTION[move_list[i]], self._env, self.team_home)
+#                i += 1
 
         # Check for dead
         for i in range(len(self.team1)):
@@ -405,7 +418,7 @@ class CapEnv(gym.Env):
 
         self.create_observation_space(BLUE)
         # self.individual_reward()
-        # self.create_observation_space(RED)
+        self.create_observation_space(RED)
         # self.state = self.observation_space
         self.state = self._env
 
