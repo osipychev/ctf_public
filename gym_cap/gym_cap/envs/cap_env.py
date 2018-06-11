@@ -61,8 +61,8 @@ class CapEnv(gym.Env):
 
         self.team1 = []
         self.team2 = []
-        self.policy_blue = policy_blue
-        self.policy_red = policy_red
+        if policy_blue is not None: self.policy_blue = policy_blue
+        if policy_red is not None: self.policy_red = policy_red
         
         for y in range(len(self._env)):
             for x in range(len(self._env[0])):
