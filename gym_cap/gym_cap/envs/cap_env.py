@@ -59,8 +59,8 @@ class CapEnv(gym.Env):
         self.map_size = (len(self._env), len(self._env[0]))
         self.team_home = self._env.copy()
 
-        self.team1 = []
-        self.team2 = []
+        self.team_blue = []
+        self.team_red = []
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
         
@@ -68,38 +68,37 @@ class CapEnv(gym.Env):
             for x in range(len(self._env[0])):
                 if self._env[x][y] == TEAM1_UGV:
                     cur_ent = GroundVehicle([x, y], self.team_home, 1)
-                    self.team1.insert(0, cur_ent)
+                    self.team_blue.insert(0, cur_ent)
                     self.team_home[x][y] = TEAM1_BACKGROUND
                 elif self._env[x][y] == TEAM1_UAV:
                     cur_ent = AerialVehicle([x, y], self.team_home, 1)
-                    self.team1.append(cur_ent)
+                    self.team_blue.append(cur_ent)
                     self.team_home[x][y] = TEAM1_BACKGROUND
                 elif self._env[x][y] == TEAM2_UGV:
                     cur_ent = GroundVehicle([x, y], self.team_home, 2)
-                    self.team2.insert(0, cur_ent)
+                    self.team_red.insert(0, cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
                 elif self._env[x][y] == TEAM2_UAV:
                     cur_ent = AerialVehicle([x, y], self.team_home, 2)
-                    self.team2.append(cur_ent)
+                    self.team_red.append(cur_ent)
                     self.team_home[x][y] = TEAM2_BACKGROUND
 
         # print(DataFrame(self._env))
         # place arial units at end of list
-        for i in range(len(self.team1)):
-            if self.team1[i].air:
-                self.team1.insert(len(self.team1), self.team1.pop(i))
-        for i in range(len(self.team2)):
-            if self.team2[i].air:
-                self.team2.insert(len(self.team2) - 1, self.team2.pop(i))
+        for i in range(len(self.team_blue)):
+            if self.team_blue[i].air:
+                self.team_blue.insert(len(self.team_blue), self.team_blue.pop(i))
+        for i in range(len(self.team_red)):
+            if self.team_red[i].air:
+                self.team_red.insert(len(self.team_red) - 1, self.team_red.pop(i))
 
         self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
 
         self.game_lost = False
         self.game_won = False
 
-        self.create_observation_space(RED)
-        self.create_observation_space(BLUE)
-        self.state = self.observation_space
+        self.create_observation_space()
+        self.state = self.observation_space_blue
         self.cap_view = CaptureView2D(screen_size=(500, 500))
         self.viewer = None
         self.mode = mode
@@ -132,12 +131,12 @@ class CapEnv(gym.Env):
         # return 1
 
         # Dead enemy team gives .5/total units for each dead unit
-        for i in range(len(self.team2)):
-            if not self.team2[i].isAlive:
-                reward += (50.0 / len(self.team2))
-        for i in range(len(self.team1)):
-            if not self.team1[i].isAlive:
-                reward -= (50.0 / len(self.team1))
+        for i in range(len(self.team_red)):
+            if not self.team_red[i].isAlive:
+                reward += (50.0 / len(self.team_red))
+        for i in range(len(self.team_blue)):
+            if not self.team_blue[i].isAlive:
+                reward -= (50.0 / len(self.team_blue))
 
         # 10,000 steps returns -.5
         # map_size_2 = map_size[0]*map_size[1]
@@ -155,7 +154,7 @@ class CapEnv(gym.Env):
         # reward-=((self.cur_step/10000.0)*.5)
         return reward
 
-    def create_observation_space(self, team=BLUE):
+    def create_observation_space(self):
         """
         Creates the observation space in self.observation_space
 
@@ -167,32 +166,52 @@ class CapEnv(gym.Env):
             Team to create obs space for
         """
 
-        if team == BLUE:
-            self.observation_space = np.full((self.map_size[0], self.map_size[1]), -1)
-            for agent in self.team1:
-                if not agent.isAlive:
-                    continue
-                loc = agent.get_loc()
-                for i in range(-agent.range, agent.range + 1):
-                    for j in range(-agent.range, agent.range + 1):
-                        locx, locy = i + loc[0], j + loc[1]
-                        if (i * i + j * j <= agent.range ** 2) and \
-                                not (locx < 0 or locx > self.map_size[0] - 1) and \
-                                not (locy < 0 or locy > self.map_size[1] - 1):
-                            self.observation_space[locx][locy] = self._env[locx][locy]
-        elif team == RED:
-            self.observation_space2 = np.full((self.map_size[0], self.map_size[1]), -1)
-            for agent in self.team2:
-                if not agent.isAlive:
-                    continue
-                loc = agent.get_loc()
-                for i in range(-agent.range, agent.range + 1):
-                    for j in range(-agent.range, agent.range + 1):
-                        locx, locy = i + loc[0], j + loc[1]
-                        if (i * i + j * j <= agent.range ** 2) and \
-                                not (locx < 0 or locx > self.map_size[0] - 1) and \
-                                not (locy < 0 or locy > self.map_size[1] - 1):
-                            self.observation_space2[locx][locy] = self._env[locx][locy]
+        self.observation_space_blue = np.full((self.map_size[0], self.map_size[1]), -1)
+        for agent in self.team_blue:
+            if not agent.isAlive:
+                continue
+            loc = agent.get_loc()
+            for i in range(-agent.range, agent.range + 1):
+                for j in range(-agent.range, agent.range + 1):
+                    locx, locy = i + loc[0], j + loc[1]
+                    if (i * i + j * j <= agent.range ** 2) and \
+                            not (locx < 0 or locx > self.map_size[0] - 1) and \
+                            not (locy < 0 or locy > self.map_size[1] - 1):
+                        self.observation_space_blue[locx][locy] = self._env[locx][locy]
+    
+        self.observation_space_red = np.full((self.map_size[0], self.map_size[1]), -1)
+        for agent in self.team_red:
+            if not agent.isAlive:
+                continue
+            loc = agent.get_loc()
+            for i in range(-agent.range, agent.range + 1):
+                for j in range(-agent.range, agent.range + 1):
+                    locx, locy = i + loc[0], j + loc[1]
+                    if (i * i + j * j <= agent.range ** 2) and \
+                            not (locx < 0 or locx > self.map_size[0] - 1) and \
+                            not (locy < 0 or locy > self.map_size[1] - 1):
+                        self.observation_space_red[locx][locy] = self._env[locx][locy]
+    @property
+    def get_team_blue(self):
+        return np.copy(self.team_blue)
+    
+    @property
+    def get_team_red(self):
+        return np.copy(self.team_red)
+    
+    @property
+    def get_map(self):
+        return np.copy(self.team_home)
+    
+    @property
+    def get_obs_blue(self):
+        return np.copy(self.observation_space_blue)
+    
+    @property
+    def get_obs_red(self):
+        return np.copy(self.observation_space_red)
+    
+    
 
     # TODO improve
     # Change from range to attack range
@@ -210,8 +229,8 @@ class CapEnv(gym.Env):
             Represents which team the unit belongs to
         """
         if team == 1:
-            loc = self.team1[entity_num].get_loc()
-            cur_range = self.team1[entity_num].a_range
+            loc = self.team_blue[entity_num].get_loc()
+            cur_range = self.team_blue[entity_num].a_range
             for x in range(-cur_range, cur_range + 1):
                 for y in range(-cur_range, cur_range + 1):
                     locx, locy = x + loc[0], y + loc[1]
@@ -220,15 +239,15 @@ class CapEnv(gym.Env):
                             not (locy < 0 or locy > self.map_size[1] - 1):
                         if self._env[locx][locy] == TEAM2_UGV:
                             if self.team_home[locx][locy] == TEAM1_BACKGROUND:
-                                for i in range(len(self.team2)):
-                                    enemy_locx, enemy_locy = self.team2[i].get_loc()
+                                for i in range(len(self.team_red)):
+                                    enemy_locx, enemy_locy = self.team_red[i].get_loc()
                                     if enemy_locx == locx and enemy_locy == locy:
-                                        self.team2[i].isAlive = False
+                                        self.team_red[i].isAlive = False
                                         self._env[locx][locy] = DEAD
                                         break
         elif team == 2:
-            loc = self.team2[entity_num].get_loc()
-            cur_range = self.team2[entity_num].a_range
+            loc = self.team_red[entity_num].get_loc()
+            cur_range = self.team_red[entity_num].a_range
             for x in range(-cur_range, cur_range + 1):
                 for y in range(-cur_range, cur_range + 1):
                     locx, locy = x + loc[0], y + loc[1]
@@ -237,10 +256,10 @@ class CapEnv(gym.Env):
                             not (locy < 0 or locy > self.map_size[1] - 1):
                         if self._env[locx][locy] == TEAM1_UGV:
                             if self.team_home[locx][locy] == TEAM2_BACKGROUND:
-                                for i in range(len(self.team1)):
-                                    enemy_locx, enemy_locy = self.team1[i].get_loc()
+                                for i in range(len(self.team_blue)):
+                                    enemy_locx, enemy_locy = self.team_blue[i].get_loc()
                                     if enemy_locx == locx and enemy_locy == locy:
-                                        self.team1[i].isAlive = False
+                                        self.team_blue[i].isAlive = False
                                         self._env[locx][locy] = DEAD
                                         break
 
@@ -291,19 +310,6 @@ class CapEnv(gym.Env):
         self.cur_step += 1
         move_list = []
 
-        # ERROR checking
-#        if type(entities_action) is int:
-#            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
-#                sys.exit("ERROR: You entered too many moves. \
-#                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-#            while len(move_list) < (NUM_BLUE + NUM_UAV):
-#                move_list.append(entities_action % 5)
-#                entities_action = int(entities_action / 5)
-#        else:
-#            if len(entities_action) > NUM_BLUE + NUM_UAV:
-#                sys.exit("ERROR: You entered too many moves. \
-#                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-#            move_list = entities_action
 
 #        # Move team2
 #        team2_actions = 0
@@ -352,17 +358,39 @@ class CapEnv(gym.Env):
 
 
         # Get actions from uploaded policies
-        move_list_blue = self.policy_blue.gen_action(self.team1,self.observation_space,free_map=self.team_home)
-        move_list_red = self.policy_red.gen_action(self.team2,self.observation_space2,free_map=self.team_home)
-
+        try:
+            move_list_red = self.policy_red.gen_action(self.team_red,self.observation_space_red,free_map=self.team_home)
+        except:
+            print("No valid policy for red team")
+            exit()
+        
+        if entities_action == None:
+            try:
+                move_list_blue = self.policy_blue.gen_action(self.team_blue,self.observation_space_blue,free_map=self.team_home)
+            except:
+                print("No valid policy for blue team and no actions provided")
+                exit()
+        elif type(entities_action) is int:
+            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
+                sys.exit("ERROR: You entered too many moves. \
+                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+            while len(move_list) < (NUM_BLUE + NUM_UAV):
+                move_list_blue.append(entities_action % 5)
+                entities_action = int(entities_action / 5)
+        else:
+            if len(entities_action) > NUM_BLUE + NUM_UAV:
+                sys.exit("ERROR: You entered too many moves. \
+                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+            move_list_blue = entities_action
+            
         
         # Move team1
         for idx, act in enumerate(move_list_blue):
-            self.team1[idx].move(self.ACTION[act], self._env, self.team_home)
+            self.team_blue[idx].move(self.ACTION[act], self._env, self.team_home)
             
         # Move team2
         for idx, act in enumerate(move_list_red):
-            self.team2[idx].move(self.ACTION[act], self._env, self.team_home)
+            self.team_red[idx].move(self.ACTION[act], self._env, self.team_home)
 
         # Allows for both an integer and a list input
 #        move_list = []
@@ -380,18 +408,18 @@ class CapEnv(gym.Env):
 #                i += 1
 
         # Check for dead
-        for i in range(len(self.team1)):
-            if not self.team1[i].atHome or self.team1[i].air or not self.team1[i].isAlive:
+        for i in range(len(self.team_blue)):
+            if not self.team_blue[i].atHome or self.team_blue[i].air or not self.team_blue[i].isAlive:
                 continue
             self.check_dead(i, 1)
-        for i in range(len(self.team2)):
-            if not self.team2[i].atHome or self.team2[i].air or not self.team2[i].isAlive:
+        for i in range(len(self.team_red)):
+            if not self.team_red[i].atHome or self.team_red[i].air or not self.team_red[i].isAlive:
                 continue
             self.check_dead(i, 2)
 
         # Check win and lose conditions
         has_alive_entity = False
-        for i in self.team2:
+        for i in self.team_red:
             if i.isAlive and not i.air:
                 has_alive_entity = True
                 locx, locy = i.get_loc()
@@ -403,7 +431,7 @@ class CapEnv(gym.Env):
             self.game_won = True
             self.game_lost = False
         has_alive_entity = False
-        for i in self.team1:
+        for i in self.team_blue:
             if i.isAlive and not i.air:
                 has_alive_entity = True
                 locx, locy = i.get_loc()
@@ -416,9 +444,8 @@ class CapEnv(gym.Env):
 
         reward = self.create_reward()
 
-        self.create_observation_space(BLUE)
+        self.create_observation_space()
         # self.individual_reward()
-        self.create_observation_space(RED)
         # self.state = self.observation_space
         self.state = self._env
 
@@ -483,10 +510,10 @@ class CapEnv(gym.Env):
         if self.render_mode == "env":
             self.cap_view.update_env(self._env)
         elif self.render_mode == "obs":
-            self.cap_view.update_env(self.observation_space)
+            self.cap_view.update_env(self.observation_space_blue)
         elif self.render_mode == "obs2":
             # rl_suggestions = predict_move()
-            self.cap_view.update_env(self.observation_space2)
+            self.cap_view.update_env(self.observation_space_red)
         elif self.render_mode == "team":
             self.cap_view.update_env(self.team_home)
         return
