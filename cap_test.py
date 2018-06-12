@@ -34,10 +34,12 @@ while True:
         #observation, reward, done, info = env.step(action)
         
         observation, reward, done, info = env.step()  # feedback from environment
+        
+        # render and sleep are not needed for score analysis
         env.render(mode="fast")
+        time.sleep(.05)
         
         t += 1
-        time.sleep(.05)
         if t == 100000:
             break
         
