@@ -5,6 +5,7 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 from pandas import *
+import numpy as np
 
 from .agent import *
 from .enemy_ai import EnemyAI

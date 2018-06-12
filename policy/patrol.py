@@ -86,7 +86,7 @@ class PolicyGen:
                 action = 2
             #if in the map and have free space at left - go left.
             elif (not self.heading_right[index] and
-                  x-1 > 0 and
+                  x > 0 and
                   obs[x-1][y] == self.free_map[x][y]): 
                 action = 4
             #otherwise - turn around.
