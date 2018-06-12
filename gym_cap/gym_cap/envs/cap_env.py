@@ -8,10 +8,10 @@ from pandas import *
 import numpy as np
 
 from .agent import *
-from .enemy_ai import EnemyAI
+#from .enemy_ai import EnemyAI
 from .cap_view2d import CaptureView2D
 from .create_map import CreateMap
-from .predict import *
+#from .predict import *
 
 """
 Requires that all units initially exist in home zone.

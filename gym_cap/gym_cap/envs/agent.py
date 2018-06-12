@@ -3,7 +3,7 @@
 # from .cap_view2d import CaptureView2D
 from .const import *
 # from .create_map import CreateMap
-from .enemy_ai import EnemyAI
+#from .enemy_ai import EnemyAI
 
 
 class Agent:
@@ -28,7 +28,7 @@ class Agent:
         self.range = UGV_RANGE
         self.a_range = UGV_A_RANGE
         self.air = False
-        self.ai = EnemyAI(map_only)
+        #self.ai = EnemyAI(map_only)
         self.team = team_number
         self.move_selected = False
 
