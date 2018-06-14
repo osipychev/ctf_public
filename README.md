@@ -8,6 +8,11 @@ conda env create -f env.yml
 ```
 or manually install OpenAI GYM, PyGame, Pandas, Numpy using pip if needed.
 
+Activate the virtual environment using:
+```sh
+source activate ctf
+```
+
 Install Cap-Env (or CtF) using python setup script provided. For that, you can run alias.txt file using bash:
 ```sh
 cat alias.txt | bash
