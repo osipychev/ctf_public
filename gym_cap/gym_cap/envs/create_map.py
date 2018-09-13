@@ -1,7 +1,5 @@
 import numpy as np
 from .const import *
-from pandas import *
-
 
 class CreateMap:
     """This class generates a random map
@@ -26,9 +24,6 @@ class CreateMap:
             3   : enemy UGV
             4   : enemy UAV
             5   : gray units
-        in_seed : int 0-255
-            Random seed to control map generation
-
         """
         if not in_seed == None:
             np.random.seed(in_seed)
@@ -73,4 +68,3 @@ class CreateMap:
                 break
         new_map[lx,ly] = code_what
         return new_map
-
