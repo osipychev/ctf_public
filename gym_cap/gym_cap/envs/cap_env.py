@@ -4,14 +4,11 @@ import sys
 import gym
 from gym import spaces
 from gym.utils import seeding
-from pandas import *
 import numpy as np
 
 from .agent import *
-#from .enemy_ai import EnemyAI
 from .cap_view2d import CaptureView2D
 from .create_map import CreateMap
-#from .predict import *
 
 """
 Requires that all units initially exist in home zone.
@@ -20,12 +17,13 @@ Requires that all units initially exist in home zone.
 
 class CapEnv(gym.Env):
     metadata = {
-        "render.modes": ["fast", "human"],
+        "render.modes": ["fast", "human", 'rgb_array'],
+        'video.frames_per_second' : 50
     }
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="random", in_seed=None):
+    def __init__(self, map_size=20, mode="random"):
         """
         Constructor
 
@@ -34,37 +32,36 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        self._reset(map_size, mode=mode)
+        self.seed()
+        self.reset(map_size, mode=mode)
+        self.viewer = None
 
-    def _reset(self, map_size=None, mode="random", in_seed=None, render_mode="env", policy_blue=None, policy_red=None):
+    def reset(self, map_size=None, mode="random", render_mode="env", policy_blue=None, policy_red=None):
         """
         Resets the game
 
         :param map_size: Size of the map
         :param mode: Action generation mode
-        :param in_seed: Seed for map
         :param render_mode: what to render
         :return: void
 
         """
-        # If seed not defined, define it
-        # If in_seed is not None, set seed to its value
-        self.in_seed = in_seed
         self.render_mode = render_mode
 
         if map_size is None:
-            self._env = CreateMap.gen_map('map', dim=self.map_size[0], in_seed=self.in_seed)
+            self._env = CreateMap.gen_map('map', dim=self.map_size[0])
         else:
-            self._env = CreateMap.gen_map('map', map_size, in_seed=self.in_seed)
+            self._env = CreateMap.gen_map('map', map_size)
 
         self.map_size = (len(self._env), len(self._env[0]))
         self.team_home = self._env.copy()
 
         self.team_blue = []
         self.team_red = []
+
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
-        
+
         for y in range(len(self._env)):
             for x in range(len(self._env[0])):
                 if self._env[x][y] == TEAM1_UGV:
@@ -101,7 +98,6 @@ class CapEnv(gym.Env):
         self.create_observation_space()
         self.state = self.observation_space_blue
         self.cap_view = CaptureView2D(screen_size=(500, 500))
-        self.viewer = None
         self.mode = mode
 
         self.game_lost = False
@@ -111,7 +107,6 @@ class CapEnv(gym.Env):
         # Necessary for human mode
         self.first = True
 
-        self._seed()
 
         return self.state
 
@@ -142,7 +137,7 @@ class CapEnv(gym.Env):
         # 10,000 steps returns -.5
         # map_size_2 = map_size[0]*map_size[1]
         # reward-=(.5/map_size_2)
-        reward -= (50.0 / 1000) * self.cur_step
+        #reward -= (50.0 / 1000) * self.cur_step
         if self.game_won:
             reward += 100
         if reward <= -100:
@@ -179,7 +174,7 @@ class CapEnv(gym.Env):
                             not (locx < 0 or locx > self.map_size[0] - 1) and \
                             not (locy < 0 or locy > self.map_size[1] - 1):
                         self.observation_space_blue[locx][locy] = self._env[locx][locy]
-    
+
         self.observation_space_red = np.full((self.map_size[0], self.map_size[1]), -1)
         for agent in self.team_red:
             if not agent.isAlive:
@@ -195,24 +190,24 @@ class CapEnv(gym.Env):
     @property
     def get_team_blue(self):
         return np.copy(self.team_blue)
-    
+
     @property
     def get_team_red(self):
         return np.copy(self.team_red)
-    
+
     @property
     def get_map(self):
         return np.copy(self.team_home)
-    
+
     @property
     def get_obs_blue(self):
         return np.copy(self.observation_space_blue)
-    
+
     @property
     def get_obs_red(self):
         return np.copy(self.observation_space_red)
-    
-    
+
+
 
     # TODO improve
     # Change from range to attack range
@@ -264,7 +259,7 @@ class CapEnv(gym.Env):
                                         self._env[locx][locy] = DEAD
                                         break
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         """
         todo docs still
 
@@ -276,7 +271,7 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, entities_action=None, cur_suggestions=None):
+    def step(self, entities_action=None, cur_suggestions=None):
         """
         Takes one step in the cap the flag game
 
@@ -295,68 +290,8 @@ class CapEnv(gym.Env):
             info    :
         """
 
-#        if RL_SUGGESTIONS and cur_suggestions is None:
-#            sys.exit("No suggestions provided to step function.\n" +
-#                     "Train a model then submit a list of probabilities [0, 1].")
-#        if not len(cur_suggestions) == NUM_BLUE+NUM_UAV:
-#            sys.exit("Invalid number of suggestions. " + str(len(cur_suggestions)) + " suggested," +
-#                     "but there are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-#
-#        for i in cur_suggestions:
-#            for j in i:
-#                if not 0 <= j <= 1:
-#                    sys.exit("RL suggestions outside of required range. [0, 1]")
-
-        # print(DataFrame(self._env))
         self.cur_step += 1
         move_list = []
-
-
-#        # Move team2
-#        team2_actions = 0
-#        if self.mode == "run_away":
-#            team2_actions = generate_run_actions()
-#        elif self.mode == "defend":
-#            team2_actions = EnemyAI.patrol(self.team2)
-#        elif self.mode == "attack":
-#            team2_actions = self.action_space.sample()
-#        elif self.mode == "sandbox":
-#            for i in range(len(self.team2)):
-#                locx, locy = self.team2[i].get_loc()
-#                if self.team2[i].atHome:
-#                    self._env[locx][locy] = TEAM2_BACKGROUND
-#                else:
-#                    self._env[locx][locy] = TEAM1_BACKGROUND
-#            self.team2 = []
-#        elif self.mode == "patrol":
-#            for agent in self.team2:
-#                team2_actions.append(agent.ai.patrol(agent, self.observation_space2, self.team2))
-#        elif self.mode == "random":
-#            team2_actions = random.randint(0, len(self.ACTION) ** (NUM_RED + NUM_UAV))  # choose random action
-#        elif self.mode == "human":
-#            self._render()
-#            if self.render_mode == "env":
-#                team2_actions = self.cap_view.human_move(self._env, self.team_home, self.team2, cur_suggestions, cur_suggestions)
-#            elif self.render_mode == "obs2":
-#                team2_actions = self.cap_view.human_move(self.observation_space2, self.team_home, self.team2, cur_suggestions, cur_suggestions)
-#            else:
-#                sys.exit("Enter a valid render mode for suggestions.")
-#        elif self.mode == "human_blue":
-#            for i in range(len(self.team2)):
-#                locx, locy = self.team2[i].get_loc()
-#                if self.team2[i].atHome:
-#                    self._env[locx][locy] = TEAM2_BACKGROUND
-#                else:
-#                    self._env[locx][locy] = TEAM1_BACKGROUND
-#            self.team2 = []
-#            self._render()
-#            if self.render_mode == "env":
-#                move_list = self.cap_view.human_move(self._env, self.team_home, self.team1, cur_suggestions)
-#            elif self.render_mode == "obs":
-#                move_list = self.cap_view.human_move(self.observation_space, self.team_home, self.team1, cur_suggestions)
-#            else:
-#                sys.exit("Enter a valid render mode for suggestions.")
-
 
         # Get actions from uploaded policies
         try:
@@ -364,7 +299,7 @@ class CapEnv(gym.Env):
         except:
             print("No valid policy for red team")
             exit()
-        
+
         if entities_action == None:
             try:
                 move_list_blue = self.policy_blue.gen_action(self.team_blue,self.observation_space_blue,free_map=self.team_home)
@@ -383,30 +318,16 @@ class CapEnv(gym.Env):
                 sys.exit("ERROR: You entered too many moves. \
                          There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
             move_list_blue = entities_action
-            
-        
+
+
         # Move team1
         for idx, act in enumerate(move_list_blue):
             self.team_blue[idx].move(self.ACTION[act], self._env, self.team_home)
-            
+
         # Move team2
         for idx, act in enumerate(move_list_red):
             self.team_red[idx].move(self.ACTION[act], self._env, self.team_home)
 
-        # Allows for both an integer and a list input
-#        move_list = []
-#        if isinstance(team2_actions, int):
-#            for i in range(len(self.team2)):
-#                move_list.append(team2_actions % 5)
-#                team2_actions = team2_actions // 5
-#        else:
-#            move_list = team2_actions
-#
-#        i = 0
-#        for agent in self.team2:
-#            if agent.isAlive:
-#                agent.move(self.ACTION[move_list[i]], self._env, self.team_home)
-#                i += 1
 
         # Check for dead
         for i in range(len(self.team_blue)):
@@ -457,72 +378,61 @@ class CapEnv(gym.Env):
 
         return self.state, reward, isDone, info
 
-    # def render(self):
-    #     """
-    #     Renders the screen options="obs, env"
-    #
-    #     Parameters
-    #     ----------
-    #     self    : object
-    #         CapEnv object
-    #     mode    : string
-    #         Defines what will be rendered
-    #     """
-    #     SCREEN_W = 800
-    #     SCREEN_H = 800
-    #     env = self._env
-    #
-    #     from gym.envs.classic_control import rendering
-    #     if self.viewer is None:
-    #         self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
-    #         self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
-    #
-    #     tile_w = SCREEN_W / len(env)
-    #     tile_h = SCREEN_H / len(env[0])
-    #     map_h = len(env[0])
-    #     map_w = len(env)
-    #
-    #     self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
-    #
-    #     for row in range(map_h):
-    #         for col in range(map_w):
-    #             cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
-    #             if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
-    #                 self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
-    #             else:
-    #                 self.viewer.draw_polygon([
-    #                     (col * tile_w, row * tile_h),
-    #                     (col * tile_w + tile_w, row * tile_h),
-    #                     (col * tile_w + tile_w, row * tile_h + tile_h),
-    #                     (col * tile_w, row * tile_h + tile_h)], color=cur_color)
-    #
-    #     return self.viewer.render(return_rgb_array == 'rgb_array')
-    #     # print(self._env)
-
-    def _render(self, mode="fast", close=False):
+    def render(self, mode='human'):
         """
-        Renders the screen options="obs, env, obs2, team"
+        Renders the screen options="obs, env"
 
-        :param close: If window should be closed
-        :return:
+        Parameters
+        ----------
+        self    : object
+            CapEnv object
+        mode    : string
+            Defines what will be rendered
         """
-        if close:
-            quit_game()
+        SCREEN_W = 600
+        SCREEN_H = 600
+
         if self.render_mode == "env":
-            self.cap_view.update_env(self._env)
-        elif self.render_mode == "obs":
-            self.cap_view.update_env(self.observation_space_blue)
-        elif self.render_mode == "obs2":
-            # rl_suggestions = predict_move()
-            self.cap_view.update_env(self.observation_space_red)
-        elif self.render_mode == "team":
-            self.cap_view.update_env(self.team_home)
-        return
+            env = self._env
+        elif self.render_mode == "blue":
+            env = self.observation_space_blue
+        elif self.render_mode == "red":
+            env = self.observation_space_red
 
-    def quit_game(self):
-        if self.viewer is not None:
-            self.viewer.close()
-            self.viewer = None
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+
+        tile_w = SCREEN_W / len(env)
+        tile_h = SCREEN_H / len(env[0])
+        map_h = len(env[0])
+        map_w = len(env)
+
+        self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
+
+        for row in range(map_h):
+            for col in range(map_w):
+                cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
+                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
+                    self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
+                else:
+                    self.viewer.draw_polygon([
+                        (col * tile_w, row * tile_h),
+                        (col * tile_w + tile_w, row * tile_h),
+                        (col * tile_w + tile_w, row * tile_h + tile_h),
+                        (col * tile_w, row * tile_h + tile_h)], color=cur_color)
+
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+
+    def close(self):
+        if self.viewer: self.viewer.close()
+
+
+    # def quit_game(self):
+    #     if self.viewer is not None:
+    #         self.viewer.close()
+    #         self.viewer = None
 
 
 # Different environment sizes and modes
