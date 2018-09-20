@@ -7,7 +7,6 @@ from gym.utils import seeding
 import numpy as np
 
 from .agent import *
-from .cap_view2d import CaptureView2D
 from .create_map import CreateMap
 
 """
@@ -97,7 +96,6 @@ class CapEnv(gym.Env):
 
         self.create_observation_space()
         self.state = self.observation_space_blue
-        self.cap_view = CaptureView2D(screen_size=(500, 500))
         self.mode = mode
 
         self.game_lost = False
@@ -144,10 +142,6 @@ class CapEnv(gym.Env):
             reward = -100
             self.game_lost = True
 
-        # if self.cur_step > 10000:
-        # reward-=.5
-        # else:
-        # reward-=((self.cur_step/10000.0)*.5)
         return reward
 
     def create_observation_space(self):
