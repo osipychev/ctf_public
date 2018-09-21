@@ -97,6 +97,8 @@ class CapEnv(gym.Env):
         self.create_observation_space()
         self.state = self.observation_space_blue
 
+        self.mode = mode
+
         if NUM_RED == 0:
             self.mode = "sandbox"
 
