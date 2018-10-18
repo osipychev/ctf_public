@@ -48,51 +48,21 @@ class CapEnv(gym.Env):
         self.render_mode = render_mode
 
         if map_size is None:
-            self._env = CreateMap.gen_map('map', dim=self.map_size[0])
+            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0])
         else:
-            self._env = CreateMap.gen_map('map', map_size)
+            self._env, self.team_home = CreateMap.gen_map('map', map_size)
 
         self.map_size = (len(self._env), len(self._env[0]))
-        self.team_home = self._env.copy()
-
-        self.team_blue = []
-        self.team_red = []
 
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
 
-        for y in range(len(self._env)):
-            for x in range(len(self._env[0])):
-                if self._env[x][y] == TEAM1_UGV:
-                    cur_ent = GroundVehicle([x, y], self.team_home, 1)
-                    self.team_blue.insert(0, cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM1_UAV:
-                    cur_ent = AerialVehicle([x, y], self.team_home, 1)
-                    self.team_blue.append(cur_ent)
-                    self.team_home[x][y] = TEAM1_BACKGROUND
-                elif self._env[x][y] == TEAM2_UGV:
-                    cur_ent = GroundVehicle([x, y], self.team_home, 2)
-                    self.team_red.insert(0, cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-                elif self._env[x][y] == TEAM2_UAV:
-                    cur_ent = AerialVehicle([x, y], self.team_home, 2)
-                    self.team_red.append(cur_ent)
-                    self.team_home[x][y] = TEAM2_BACKGROUND
-
-        # print(DataFrame(self._env))
-        # place arial units at end of list
-        for i in range(len(self.team_blue)):
-            if self.team_blue[i].air:
-                self.team_blue.insert(len(self.team_blue), self.team_blue.pop(i))
-        for i in range(len(self.team_red)):
-            if self.team_red[i].air:
-                self.team_red.insert(len(self.team_red) - 1, self.team_red.pop(i))
-
         self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
 
-        self.game_lost = False
-        self.game_won = False
+        self.blue_win = False
+        self.red_win = False
+
+        self.team_blue, self.team_red = self._map_to_list(self._env, self.team_home)
 
         self.create_observation_space()
         self.state = self.observation_space_blue
@@ -102,8 +72,8 @@ class CapEnv(gym.Env):
         if NUM_RED == 0:
             self.mode = "sandbox"
 
-        self.game_lost = False
-        self.game_won = False
+        self.blue_win = False
+        self.red_win = False
         self.cur_step = 0
 
         # Necessary for human mode
@@ -111,6 +81,31 @@ class CapEnv(gym.Env):
 
 
         return self.state
+
+    def _map_to_list(self, complete_map, static_map):
+        """
+        From given map, it generates objects of agents and push them to list
+
+        """
+        team_blue = []
+        team_red = []
+
+        for y in range(len(complete_map)):
+            for x in range(len(complete_map[0])):
+                if complete_map[x][y] == TEAM1_UGV:
+                    cur_ent = GroundVehicle([x, y], static_map, 1)
+                    team_blue.append(cur_ent)
+                elif complete_map[x][y] == TEAM1_UAV:
+                    cur_ent = AerialVehicle([x, y], static_map, 1)
+                    team_blue.insert(0, cur_ent)
+                elif complete_map[x][y] == TEAM2_UGV:
+                    cur_ent = GroundVehicle([x, y], static_map, 2)
+                    team_red.append(cur_ent)
+                elif complete_map[x][y] == TEAM2_UAV:
+                    cur_ent = AerialVehicle([x, y], static_map, 2)
+                    team_red.insert(0, cur_ent)
+
+        return team_blue, team_red
 
     def create_reward(self):
         """
@@ -122,11 +117,11 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         reward = 0
-        # Win and loss return max rewards
-        # if self.game_lost:
-        # return -1
-        # if self.game_won:
-        # return 1
+
+        if self.blue_win:
+            return 100
+        if self.red_win:
+            return -100
 
         # Dead enemy team gives .5/total units for each dead unit
         for i in range(len(self.team_red)):
@@ -135,16 +130,6 @@ class CapEnv(gym.Env):
         for i in range(len(self.team_blue)):
             if not self.team_blue[i].isAlive:
                 reward -= (50.0 / len(self.team_blue))
-
-        # 10,000 steps returns -.5
-        # map_size_2 = map_size[0]*map_size[1]
-        # reward-=(.5/map_size_2)
-        #reward -= (50.0 / 1000) * self.cur_step
-        if self.game_won:
-            reward += 100
-        if reward <= -100:
-            reward = -100
-            self.game_lost = True
 
         return reward
 
@@ -344,34 +329,28 @@ class CapEnv(gym.Env):
                 has_alive_entity = True
                 locx, locy = i.get_loc()
                 if self.team_home[locx][locy] == TEAM1_FLAG:
-                    self.game_lost = True
-
+                    self.red_win = True
         # TODO Change last condition for multi agent model
         if not has_alive_entity and self.mode != "sandbox" and self.mode != "human_blue":
-            self.game_won = True
-            self.game_lost = False
+            self.blue_win = True
+
         has_alive_entity = False
         for i in self.team_blue:
             if i.isAlive and not i.air:
                 has_alive_entity = True
                 locx, locy = i.get_loc()
                 if self.team_home[locx][locy] == TEAM2_FLAG:
-                    self.game_lost = False
-                    self.game_won = True
+                    self.blue_win = True
         if not has_alive_entity:
-            self.game_lost = True
-            self.game_won = False
+            self.red_win = True
 
         reward = self.create_reward()
 
         self.create_observation_space()
-        # self.individual_reward()
-        # self.state = self.observation_space
-        self.state = self._env
 
-        isDone = False
-        if self.game_won or self.game_lost:
-            isDone = True
+        self.state = np.copy(self._env)
+
+        isDone = self.red_win or self.blue_win
         info = {}
 
         return self.state, reward, isDone, info
@@ -407,19 +386,28 @@ class CapEnv(gym.Env):
         map_h = len(env[0])
         map_w = len(env)
 
+        from gym.envs.classic_control import rendering
+
         self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
 
         for row in range(map_h):
             for col in range(map_w):
-                cur_color = np.divide(COLOR_DICT[env[row][col]], 255)
-                if env[row][col] == TEAM1_UAV or env[row][col] == TEAM2_UAV:
-                    self.viewer.draw_circle(tile_w / 2, 20, color=cur_color).add_attr([col * tile_w, row * tile_h])
-                else:
-                    self.viewer.draw_polygon([
+                cur_color = np.divide(COLOR_DICT[env[col][row]], 255)
+                self.viewer.draw_polygon([
+                    (col * tile_w, row * tile_h),
+                    (col * tile_w + tile_w, row * tile_h),
+                    (col * tile_w + tile_w, row * tile_h + tile_h),
+                    (col * tile_w, row * tile_h + tile_h)], color=cur_color)
+
+                if env[col][row] == TEAM1_UAV or env[col][row] == TEAM2_UAV:
+                    self.viewer.draw_polyline([
                         (col * tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h),
-                        (col * tile_w + tile_w, row * tile_h + tile_h),
-                        (col * tile_w, row * tile_h + tile_h)], color=cur_color)
+                        ((col+1) * tile_w, (row+1) * tile_h)],
+                        color=(0,0,0), linewidth=2)
+                    self.viewer.draw_polyline([
+                        ((col+1) * tile_w, row * tile_h),
+                        (col * tile_w, (row+1) * tile_h)],
+                        color=(0,0,0), linewidth=2)#col * tile_w, row * tile_h
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 

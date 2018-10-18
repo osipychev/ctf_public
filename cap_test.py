@@ -41,12 +41,10 @@ while True:
         time.sleep(.05)
 
         t += 1
-        if t == 100000:
+        if t == 100:
             break
 
-    rscore.pop(0)
-    rscore.append(reward)
     env.reset()
     done = False
     print("Time: %.2f s, rscore: %.2f" %
-        ((time.time() - start_time),sum(rscore)/len(rscore)))
+        ((time.time() - start_time),reward))
