@@ -22,7 +22,6 @@ class Agent:
             [X,Y] location of unit
         """
         self.isAlive = True
-        self.atHome = True
         self.x, self.y = loc
         self.step = UGV_STEP
         self.range = UGV_RANGE
@@ -61,14 +60,14 @@ class Agent:
                         and env[self.x][self.y - self.step] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.y -= self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
                 elif self.y - self.step < 0:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.y = 0
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
@@ -82,7 +81,7 @@ class Agent:
                         and env[self.x][self.y - self.step] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.y -= self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UGV
                     else:
                         env[self.x][self.y] = TEAM2_UGV
@@ -96,7 +95,7 @@ class Agent:
                         and env[self.x][self.y + self.step] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.y += self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
@@ -117,7 +116,7 @@ class Agent:
                         and env[self.x][self.y + self.step] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.y += self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UGV
                     else:
                         env[self.x][self.y] = TEAM2_UGV
@@ -131,14 +130,14 @@ class Agent:
                         and env[self.x + self.step][self.y] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x += self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
                 elif self.x + self.step >= len(env):
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x = len(env) - 1
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
@@ -152,7 +151,7 @@ class Agent:
                         and env[self.x + self.step][self.y] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x += self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UGV
                     else:
                         env[self.x][self.y] = TEAM2_UGV
@@ -166,14 +165,14 @@ class Agent:
                         and env[self.x - self.step][self.y] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x -= self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
                 elif self.x - self.step < 0:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x = 0
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UAV
                     else:
                         env[self.x][self.y] = TEAM2_UAV
@@ -187,7 +186,7 @@ class Agent:
                         and env[self.x - self.step][self.y] != TEAM2_UAV:
                     env[self.x][self.y] = team_home[self.x][self.y]
                     self.x -= self.step
-                    if self.team == 1:
+                    if self.team == TEAM1_BACKGROUND:
                         env[self.x][self.y] = TEAM1_UGV
                     else:
                         env[self.x][self.y] = TEAM2_UGV
