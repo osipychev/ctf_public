@@ -17,7 +17,6 @@ rscore = [0] * 20
 
 # reset the environment and select the policies for each of the team
 observation = env.reset(map_size=20,
-                        render_mode="env",
                         policy_blue=policy.random.PolicyGen(env.get_map, env.get_team_blue),
                         policy_red=policy.roomba.PolicyGen(env.get_map, env.get_team_red))
 
@@ -46,5 +45,5 @@ while True:
 
     env.reset()
     done = False
-    print("Time: %.2f s, rscore: %.2f" %
+    print("Time: %.2f s, score: %.2f" %
         ((time.time() - start_time),reward))
