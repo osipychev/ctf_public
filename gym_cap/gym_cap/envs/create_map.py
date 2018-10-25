@@ -9,6 +9,8 @@ class CreateMap:
     def gen_map(name, dim=20, in_seed=None, rand_zones=False,
                 map_obj=[NUM_BLUE, NUM_UAV, NUM_RED, NUM_UAV, NUM_GRAY]):
         """
+        Method
+
         Parameters
         ----------
         name        : TODO
@@ -81,7 +83,11 @@ class CreateMap:
 
     def populate_map(new_map, code_where, code_what):
         """
-        Adds "code_what" to a random location of "code_where" at "new_map"
+        Function
+            Adds "code_what" to a random location of "code_where" at "new_map"    
+
+        Parameters
+        ----------
         new_map     : 2d numpy array
             Map of the environment
         code_where  : int

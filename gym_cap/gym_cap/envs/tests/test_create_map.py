@@ -2,7 +2,10 @@ import numpy as np
 from .. import *
 
 def test_map_shape():
-    """Test for CreateMap. Output map dimensions testing."""
+    """
+    Test for CreateMap. Output map dimensions testing.
+    """
+
     flag = False
     for s in [10, 20, 100, 500]:
         m1, m2 = CreateMap.gen_map('test', dim=s)
@@ -13,7 +16,9 @@ def test_map_shape():
     assert flag == False, message
 
 def test_map_population():
-    """Test for CreateMap. Output map population testing."""
+    """
+    Test for CreateMap. Output map population testing.
+    """
 
     test_val = [[4,2,4,2,4],
                 [4,0,4,0,0],
@@ -36,3 +41,14 @@ def test_map_population():
                 message = 'Map population test failed at ' + str(s) + ',' + str(val)
 
     assert flag == False, message
+
+def test_map_seed():
+    """
+    Test for CreateMap. Fixed seed map generation testing.
+    """
+    flag = False
+
+    m1, m2 = CreateMap.gen_map('test', in_seed=100)
+    m1_new, m2_new = CreateMap.gen_map('test', in_seed=100)
+
+    assert (m1_new == m1).all and (m2_new == m2).all, 'Map random seed reproductivity issue'
