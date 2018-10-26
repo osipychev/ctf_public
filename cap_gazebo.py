@@ -56,9 +56,9 @@ class CtfNode:
 
         for y in range(len(self.env._env)):
             for x in range(len(self.env._env[0])):
-                if self.env._env[x][y] == 6
+                if self.env._env[x][y] == 6:
                     locations.append([x,y])
-                if self.env._env[x][y] == 7
+                if self.env._env[x][y] == 7:
                     locations.append([x,y])
 
         return locations
@@ -68,7 +68,7 @@ class CtfNode:
 
         for y in range(len(self.env._env)):
             for x in range(len(self.env._env[0])):
-                if self.env._env[x][y] == 8
+                if self.env._env[x][y] == 8:
                     locations.append([x,y])
 
         return locations
