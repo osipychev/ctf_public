@@ -33,10 +33,13 @@ class CtfNode:
             self.env.step();
             if self.steps == self.maxsteps:
                 break
+
     def run(self):
-        self.env.reset()
-        self.done = False
-        print("Score: %.2f" % self.reward)
+        while True:
+            self.env.reset()
+            self.loop()
+            self.done = False
+            print("Score: %.2f" % self.reward)
 
     def get_agent_positions(self):
         locations = []
