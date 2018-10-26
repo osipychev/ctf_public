@@ -54,14 +54,21 @@ class CtfNode:
     def get_flag_positions(self):
         locations = []
 
-        locations.append(np.where(self.env == 6))
-        locations.append(np.where(self.env == 7))
+        for y in range(len(self.env._env)):
+            for x in range(len(self.env._env[0])):
+                if self.env._env[x][y] == 6
+                    locations.append([x,y])
+                if self.env._env[x][y] == 7
+                    locations.append([x,y])
 
         return locations
 
     def get_obstacle_positions(self):
         locations = []
 
-        locations.append(np.where(self.env == 8))
+        for y in range(len(self.env._env)):
+            for x in range(len(self.env._env[0])):
+                if self.env._env[x][y] == 8
+                    locations.append([x,y])
 
         return locations
