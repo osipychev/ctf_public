@@ -51,10 +51,17 @@ class CtfNode:
 
         return locations
 
-    def get_flags(self):
+    def get_flag_positions(self):
         locations = []
 
         locations.append(np.where(self.env == 6))
         locations.append(np.where(self.env == 7))
+
+        return locations
+
+    def get_obstacle_positions(self):
+        locations = []
+
+        locations.append(np.where(self.env == 8))
 
         return locations
