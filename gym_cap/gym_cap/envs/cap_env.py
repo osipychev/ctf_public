@@ -440,7 +440,7 @@ class CapEnv(gym.Env):
                 locx, locy = rend_loc
                 locx += x * tile_w
                 locy += y * tile_h
-                cur_color = np.divide(COLOR_DICT[env[x][y]], 255)
+                cur_color = np.divide(COLOR_DICT[env[x][y]], 255.0)
                 self.viewer.draw_polygon([
                     (locx, locy),
                     (locx + tile_w, locy),

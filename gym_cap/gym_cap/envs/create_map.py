@@ -6,6 +6,7 @@ class CreateMap:
     given dimension size, number of obstacles,
     and number of agents for each team"""
 
+    @staticmethod
     def gen_map(name, dim=20, in_seed=None, rand_zones=False,
                 map_obj=[NUM_BLUE, NUM_UAV, NUM_RED, NUM_UAV, NUM_GRAY]):
         """
@@ -81,10 +82,11 @@ class CreateMap:
         #np.save('map.npy', new_map)
         return new_map, static_map
 
+    @staticmethod
     def populate_map(new_map, code_where, code_what):
         """
         Function
-            Adds "code_what" to a random location of "code_where" at "new_map"    
+            Adds "code_what" to a random location of "code_where" at "new_map"
 
         Parameters
         ----------
