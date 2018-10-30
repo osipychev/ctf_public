@@ -53,7 +53,7 @@ class CtfNode:
         self.flags[args] = data.data
 
     def step(self):
-        self.observation, self.score, self.done, _ = env.step()  # feedback from environment
+        self.observation, self.score, self.done, _ = self.env.step()  # feedback from environment
         self.render()
         self.steps += 1
 
