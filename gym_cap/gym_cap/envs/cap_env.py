@@ -177,7 +177,7 @@ class CapEnv(gym.Env):
 
     @property
     def get_full_state(self):
-    return np.copy(self._env)
+        return np.copy(self._env)
 
     @property
     def get_team_blue(self):
