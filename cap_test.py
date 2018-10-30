@@ -38,8 +38,8 @@ while True:
         observation, reward, done, info = env.step()  # feedback from environment
 
         # render and sleep are not needed for score analysis
-        #env.render()
-        #time.sleep(.05)
+        env.render()
+        time.sleep(.05)
 
         t += 1
         if t == 100:

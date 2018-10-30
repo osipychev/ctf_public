@@ -112,10 +112,13 @@ class PolicyGen:
         dir_x = [0, 0, 1, 0, -1] # dx for [stay, up, right, down, left]
         dir_y = [0,-1, 0, 1,  0] # dy for [stay, up, right, down ,left]
         is_possible_to_move = lambda d: obs[x+dir_x[d]][y+dir_y[d]] not in [2,4,8]
-        while not is_possible_to_move(action):
-            action = np.random.randint(0,5) # pick from possible movements
-            print('bla')
-        print('nobla')
+        if not is_possible_to_move(action): # Wall or other obstacle
+            action_pool = []
+            for movement in range(5):
+                if is_possible_to_move(movement):
+                    action_pool.append(movement)
+            action = np.random.choice(action_pool) # pick from possible movements
+
         # Obtain information based on the vision
         field = self.scan(view)
         elements = field.keys()
