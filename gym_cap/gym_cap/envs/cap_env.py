@@ -176,6 +176,10 @@ class CapEnv(gym.Env):
         self.observation_space_grey = np.full_like(self._env, -1)
 
     @property
+    def get_full_state(self):
+    return np.copy(self._env)
+
+    @property
     def get_team_blue(self):
         return np.copy(self.team_blue)
 

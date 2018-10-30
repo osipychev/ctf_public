@@ -30,7 +30,7 @@ class CtfNode:
 
     def loop(self):
         while not self.done:
-            self.env.step();
+            self.env.step()
             if self.steps == self.maxsteps:
                 break
 
@@ -57,11 +57,13 @@ class CtfNode:
     def get_flag_positions(self):
         locations = []
 
-        for y in range(len(self.env._env)):
-            for x in range(len(self.env._env[0])):
-                if self.env._env[x][y] == 6:
+        state = self.env.get_map
+
+        for y in range(len(state)):
+            for x in range(len(state[0])):
+                if state[x][y] == 6:
                     locations.append([x,y])
-                if self.env._env[x][y] == 7:
+                if state[x][y] == 7:
                     locations.append([x,y])
 
         return locations
@@ -69,9 +71,11 @@ class CtfNode:
     def get_obstacle_positions(self):
         locations = []
 
-        for y in range(len(self.env._env)):
-            for x in range(len(self.env._env[0])):
-                if self.env._env[x][y] == 8:
+        state = self.env.get_map
+
+        for y in range(len(state)):
+            for x in range(len(state[0])):
+                if state[x][y] == 8:
                     locations.append([x,y])
 
         return locations
