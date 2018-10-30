@@ -418,13 +418,13 @@ class CapEnv(gym.Env):
         self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
 
         self._env_render(self.team_home,
-                        [5, 5], [SCREEN_W//2-10, SCREEN_H//2-10])
+                        [10, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
         self._env_render(self.observation_space_blue,
-                        [5+SCREEN_W//2, 5], [SCREEN_W//2-10, SCREEN_H//2-10])
+                        [10+SCREEN_W//2, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
         self._env_render(self.observation_space_red,
-                        [5+SCREEN_W//2, 5+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
+                        [10+SCREEN_W//2, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
         self._env_render(self._env,
-                        [5, 5+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
+                        [10, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 

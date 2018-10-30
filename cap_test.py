@@ -7,18 +7,20 @@ import numpy as np
 # the modules that you can use to generate the policy.
 import policy.roomba
 import policy.random
+import policy.patrol
+import policy.defense
 
 start_time = time.time()
 env = gym.make("cap-v0") # initialize the environment
 
 done = False
 t = 0
-rscore = [0] * 20
+rscore = []
 
 # reset the environment and select the policies for each of the team
 observation = env.reset(map_size=20,
-                        policy_blue=policy.random.PolicyGen(env.get_map, env.get_team_blue),
-                        policy_red=policy.roomba.PolicyGen(env.get_map, env.get_team_red))
+                        policy_blue=policy.roomba.PolicyGen(env.get_map, env.get_team_blue),
+                        policy_red=policy.random.PolicyGen(env.get_map, env.get_team_red))
 
 while True:
     while not done:
@@ -36,8 +38,8 @@ while True:
         observation, reward, done, info = env.step()  # feedback from environment
 
         # render and sleep are not needed for score analysis
-        env.render()
-        time.sleep(.05)
+        #env.render()
+        #time.sleep(.05)
 
         t += 1
         if t == 100:
@@ -45,5 +47,6 @@ while True:
 
     env.reset()
     done = False
+    rscore.append(reward)
     print("Time: %.2f s, score: %.2f" %
-        ((time.time() - start_time),reward))
+        ((time.time() - start_time),np.asarray(rscore).mean()))

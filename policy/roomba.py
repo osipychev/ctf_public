@@ -2,13 +2,10 @@
 
 This module demonstrates an example of a simple heuristic policy generator
 for Capture the Flag environment.
-    http://github.com/osipychev/missionplanner/
+    http://github.com/osipychev/ctf_public/
 
 DOs/Denis Osipychev
     http://www.denisos.com
-
-Last Modified : 8/30/18
-By : Seung Hyun Kim
 """
 
 import numpy as np
@@ -41,12 +38,14 @@ class PolicyGen:
             agent_list (list): list of all friendly units.
         """
         self.random = np.random
-
-        # Constants
-        self.exploration = 0.15
-
-        # Initialize
+        self.exploration = 0.1
         self.previous_move = self.random.randint(0, 5, len(agent_list)).tolist()
+
+        self.team = agent_list[0].team
+
+        self.flag_location = None
+        self.enemy_flag_code = 7 if self.team == 0 else 6
+        self.enemy_code = 4 if self.team == 0 else 2
 
     def gen_action(self, agent_list, observation, free_map=None):
         """Action generation method.
@@ -68,7 +67,6 @@ class PolicyGen:
         for idx, agent in enumerate(agent_list):
             action = self.policy(agent,observation, idx)
             action_out.append(action)
-            self.previous_move[idx] = action # save previous action
 
         return action_out
 
@@ -92,38 +90,39 @@ class PolicyGen:
                 - Move in the random direction (15% exploration rate)
         """
 
-        # Expand the observation with 3-thickness wall
+        # Expand the observation with wall
         # - in order to avoid dealing with the boundary
-        #print(obs)
         obsx, obsy = obs.shape
-        _obs = np.ones((obsx+6, obsy+6)) * 8
-        _obs[3:3+obsx, 3:3+obsy] = obs
+        padding = agent.range
+        _obs = np.ones((obsx+2*padding, obsy+2*padding)) * 8
+        _obs[padding:obsx+padding, padding:obsy+padding] = obs
         obs = _obs
-
 
         # Initialize Variables
         x, y = agent.get_loc()
-        x += 3
-        y += 3
-        view = obs[x-2:x+3, y-2:y+3] # limited view for the agent
-        action = 0
+        x += padding
+        y += padding
+        view = obs[x+1-padding:x+padding,
+                    y+1-padding:y+padding] # limited view for the agent
 
-        # Obtain information based on the vision
-        field = self.scan(view)
-        elements = field.keys()
+        # Continue the previous action
+        action = self.previous_move[agent_id]
 
         # Checking obstacle
         dir_x = [0, 0, 1, 0, -1] # dx for [stay, up, right, down, left]
         dir_y = [0,-1, 0, 1,  0] # dy for [stay, up, right, down ,left]
-        is_possible_to_move = lambda d: obs[x+dir_x[d]][y+dir_y[d]] not in [8,4]
+        is_possible_to_move = lambda d: obs[x+dir_x[d]][y+dir_y[d]] not in [2,4,8]
+        while not is_possible_to_move(action):
+            action = np.random.randint(0,5) # pick from possible movements
+            print('bla')
+        print('nobla')
+        # Obtain information based on the vision
+        field = self.scan(view)
+        elements = field.keys()
 
-        # Protocol
-        if 2 in elements: # Enemy in the vision
-            opposite_move = [0, 3, 4, 1, 2]
-            action = opposite_move[self.previous_move[agent_id]]
-        elif 6 in elements: # Flag Found
+        if self.enemy_flag_code in elements: # Flag Found
             # move towards the flag
-            fx, fy = field[6][0] # flag location (coord. of 'view')
+            fx, fy = field[self.enemy_flag_code][0] # flag location (coord. of 'view')
             if fy > 2: # move down
                 action = 3
             elif fy < 2: # move up
@@ -132,17 +131,15 @@ class PolicyGen:
                 action = 2
             elif fx < 2: # move right
                 action = 4
-        elif not is_possible_to_move(self.previous_move[agent_id]): # Wall or other obstacle
-            action_pool = []
-            for movement in range(5):
-                if is_possible_to_move(movement):
-                    action_pool.append(movement)
-            action = np.random.choice(action_pool) # pick from possible movements
-        else: # Non-deterministic situation
-            if np.random.random() <= self.exploration: # Exploration
-                action = np.random.randint(1,5)
-            else: # Previous Move (go straight!)
-                action = self.previous_move[agent_id]
+
+        if np.random.random() <= self.exploration: # Exploration
+            action = np.random.randint(1,5)
+
+        if self.enemy_code in elements: # Enemy in the vision
+            opposite_move = [0, 3, 4, 1, 2]
+            action = opposite_move[self.previous_move[agent_id]]
+        else:
+            self.previous_move[agent_id] = action
 
         return action
 
