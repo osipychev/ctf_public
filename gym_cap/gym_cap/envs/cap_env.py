@@ -294,6 +294,7 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self.np_random, seed = seeding.np_random(seed)
+        np.random.seed(seed)
         return [seed]
 
     def step(self, entities_action=None, cur_suggestions=None):
