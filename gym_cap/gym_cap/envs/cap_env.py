@@ -49,9 +49,9 @@ class CapEnv(gym.Env):
         """
 
         if map_size is None:
-            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES)
+            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random)
         else:
-            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES)
+            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
 
         self.map_size = (len(self._env), len(self._env[0]))
 
