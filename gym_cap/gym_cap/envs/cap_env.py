@@ -279,7 +279,7 @@ class CapEnv(gym.Env):
                         n_friends += 1
                     elif entity.team == TEAM2_BACKGROUND and self._env[locx][locy] == TEAM2_UGV:
                         n_friends += 1
-        if flag and np.random.rand() > n_friends/(n_friends + n_enemies):
+        if flag and self.np_random.rand() > n_friends/(n_friends + n_enemies):
 
             entity.isAlive = False
             self._env[loc] = DEAD
@@ -294,7 +294,6 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self.np_random, seed = seeding.np_random(seed)
-        np.random.seed(seed)
         return [seed]
 
     def step(self, entities_action=None, cur_suggestions=None):
