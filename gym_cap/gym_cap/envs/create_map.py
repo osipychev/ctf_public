@@ -7,7 +7,7 @@ class CreateMap:
     and number of agents for each team"""
 
     @staticmethod
-    def gen_map(name, dim=20, in_seed=None, rand_zones=False, np_random=None
+    def gen_map(name, dim=20, in_seed=None, rand_zones=False, np_random=None,
                 map_obj=[NUM_BLUE, NUM_UAV, NUM_RED, NUM_UAV, NUM_GRAY]):
         """
         Method
