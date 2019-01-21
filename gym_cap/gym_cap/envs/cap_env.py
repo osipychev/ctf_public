@@ -49,9 +49,9 @@ class CapEnv(gym.Env):
         """
 
         if map_size is None:
-            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES)
+            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random)
         else:
-            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES)
+            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
 
         self.map_size = (len(self._env), len(self._env[0]))
 
@@ -279,7 +279,7 @@ class CapEnv(gym.Env):
                         n_friends += 1
                     elif entity.team == TEAM2_BACKGROUND and self._env[locx][locy] == TEAM2_UGV:
                         n_friends += 1
-        if flag and np.random.rand() > n_friends/(n_friends + n_enemies):
+        if flag and self.np_random.rand() > n_friends/(n_friends + n_enemies):
 
             entity.isAlive = False
             self._env[loc] = DEAD
