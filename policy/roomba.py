@@ -113,8 +113,8 @@ class PolicyGen:
         dir_y = [0,-1, 0, 1,  0] # dy for [stay, up, right, down ,left]
         is_possible_to_move = lambda d: obs[x+dir_x[d]][y+dir_y[d]] not in [2,4,8]
         if not is_possible_to_move(action): # Wall or other obstacle
-            action_pool = []
-            for movement in range(5):
+            action_pool = [0]
+            for movement in range(1,5):
                 if is_possible_to_move(movement):
                     action_pool.append(movement)
             action = np.random.choice(action_pool) # pick from possible movements
