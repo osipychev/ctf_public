@@ -7,6 +7,7 @@ from gym.utils import seeding
 import numpy as np
 
 from .agent import *
+from .const import *
 from .create_map import CreateMap
 
 """
@@ -31,6 +32,12 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
+        self.num_blue_ugv = NUM_BLUE
+        self.num_blue_uav = NUM_UAV
+        self.num_red_ugv = NUM_RED
+        self.num_red_uav = NUM_UAV
+        self.num_grey = NUM_GRAY
+
         self.seed()
         self.reset(map_size, mode=mode)
         self.viewer = None
@@ -48,10 +55,11 @@ class CapEnv(gym.Env):
 
         """
 
+        map_obj = [self.num_blue_ugv, self.num_blue_uav, self.num_red_ugv, self.num_red_uav, self.num_grey]
         if map_size is None:
-            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random)
+            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
         else:
-            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
+            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
 
         self.map_size = (len(self._env), len(self._env[0]))
 
