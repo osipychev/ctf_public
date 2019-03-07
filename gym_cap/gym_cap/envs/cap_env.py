@@ -7,6 +7,7 @@ from gym.utils import seeding
 import numpy as np
 
 from .agent import *
+from .const import *
 from .create_map import CreateMap
 
 """
@@ -31,6 +32,12 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
+        self.num_blue_ugv = NUM_BLUE
+        self.num_blue_uav = NUM_UAV
+        self.num_red_ugv = NUM_RED
+        self.num_red_uav = NUM_UAV
+        self.num_grey = NUM_GRAY
+
         self.seed()
         self.reset(map_size, mode=mode)
         self.viewer = None
@@ -48,17 +55,18 @@ class CapEnv(gym.Env):
 
         """
 
+        map_obj = [self.num_blue_ugv, self.num_blue_uav, self.num_red_ugv, self.num_red_uav, self.num_grey]
         if map_size is None:
-            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random)
+            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
         else:
-            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
+            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
 
         self.map_size = (len(self._env), len(self._env[0]))
 
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
 
-        self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
+        self.action_space = spaces.Discrete(len(self.ACTION) ** (self.num_blue_ugv + NUM_UAV))
 
         self.blue_win = False
         self.red_win = False
@@ -69,7 +77,7 @@ class CapEnv(gym.Env):
 
         self.mode = mode
 
-        if NUM_RED == 0:
+        if self.num_red_ugv == 0:
             self.mode = "sandbox"
 
         self.blue_win = False
@@ -331,16 +339,16 @@ class CapEnv(gym.Env):
                 print("No valid policy for blue team and no actions provided")
                 exit()
         elif type(entities_action) is int:
-            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
+            if entities_action >= len(self.ACTION) ** (self.num_blue_ugv + NUM_UAV):
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-            while len(move_list) < (NUM_BLUE + NUM_UAV):
+                         There are " + str(self.num_blue_ugv + NUM_UAV) + " entities.")
+            while len(move_list) < (self.num_blue_ugv + NUM_UAV):
                 move_list_blue.append(entities_action % 5)
                 entities_action = int(entities_action / 5)
         else:
-            if len(entities_action) > NUM_BLUE + NUM_UAV:
+            if len(entities_action) > self.num_blue_ugv + NUM_UAV:
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+                         There are " + str(self.num_blue_ugv + NUM_UAV) + " entities.")
             move_list_blue = entities_action
 
 
