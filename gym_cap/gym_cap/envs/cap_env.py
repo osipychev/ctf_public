@@ -66,7 +66,7 @@ class CapEnv(gym.Env):
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
 
-        self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
+        self.action_space = spaces.Discrete(len(self.ACTION) ** (self.num_blue_ugv + NUM_UAV))
 
         self.blue_win = False
         self.red_win = False
@@ -77,7 +77,7 @@ class CapEnv(gym.Env):
 
         self.mode = mode
 
-        if NUM_RED == 0:
+        if self.num_red_ugv == 0:
             self.mode = "sandbox"
 
         self.blue_win = False
@@ -339,16 +339,16 @@ class CapEnv(gym.Env):
                 print("No valid policy for blue team and no actions provided")
                 exit()
         elif type(entities_action) is int:
-            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
+            if entities_action >= len(self.ACTION) ** (self.num_blue_ugv + NUM_UAV):
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-            while len(move_list) < (NUM_BLUE + NUM_UAV):
+                         There are " + str(self.num_blue_ugv + NUM_UAV) + " entities.")
+            while len(move_list) < (self.num_blue_ugv + NUM_UAV):
                 move_list_blue.append(entities_action % 5)
                 entities_action = int(entities_action / 5)
         else:
-            if len(entities_action) > NUM_BLUE + NUM_UAV:
+            if len(entities_action) > self.num_blue_ugv + NUM_UAV:
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+                         There are " + str(self.num_blue_ugv + NUM_UAV) + " entities.")
             move_list_blue = entities_action
 
 
