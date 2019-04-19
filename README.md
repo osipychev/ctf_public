@@ -20,3 +20,17 @@ cat alias.txt | bash
 or do it manually.
 
 Look at cap_test.py file for examples and run it to test if the environment works. Feel free to use the provided policies in Policy folder to develop your own one.
+
+## Package Install
+
+For installation:
+
+``` sh
+pip install git+https://github.com/raide-project/ctf_public@feat/reorganize
+```
+
+For update:
+
+``` sh
+pip install -U git+https://github.com/raide-project/ctf_public@feat/reorganize
+```
