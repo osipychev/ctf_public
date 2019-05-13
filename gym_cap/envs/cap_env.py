@@ -172,6 +172,7 @@ class CapEnv(gym.Env):
                             not (locy < 0 or locy > self.map_size[1] - 1):
                         self.observation_space_red[locx][locy] = self._env[locx][locy]
 
+
         # TODO need to be added observation for grey team
         self.observation_space_grey = np.full_like(self._env, -1)
 
@@ -201,7 +202,22 @@ class CapEnv(gym.Env):
 
     @property
     def get_obs_red(self):
-        return np.copy(self.observation_space_red)
+        red_view = np.copy(self.observation_space_red)
+
+        # Change red's perspective same as blue
+        swap = [
+            (TEAM1_BACKGROUND, TEAM2_BACKGROUND), # BACKGROUND
+            (TEAM1_UGV, TEAM2_UGV),               # UGV
+            (TEAM1_UAV, TEAM2_UAV),               # UAV
+            (TEAM1_FLAG, TEAM2_FLAG),             # FLAG
+        ]
+
+        for a, b in swap:
+            index_a = np.where(red_view==a)
+            red_view[red_view==b] = a
+            red_view[index_a] = b
+
+        return red_view
 
     @property
     def get_obs_grey(self):
