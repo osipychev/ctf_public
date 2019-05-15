@@ -44,8 +44,8 @@ class PolicyGen:
         self.team = agent_list[0].team
 
         self.flag_location = None
-        self.enemy_flag_code = 7 if self.team == 0 else 6
-        self.enemy_code = 4 if self.team == 0 else 2
+        self.enemy_flag_code = 7
+        self.enemy_code = 4
 
     def gen_action(self, agent_list, observation, free_map=None):
         """Action generation method.
