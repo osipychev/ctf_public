@@ -27,6 +27,10 @@ MANIFEST
 
 *.xml
 *.iml
+*.swp
+
+## Configuration
+*config.ini
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
