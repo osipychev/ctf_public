@@ -34,3 +34,11 @@ For update:
 ``` sh
 pip install -U git+https://github.com/raide-project/ctf_public
 ```
+
+## Policy Rule
+
+- The environment takes input as a tuple.
+    - The number of element in tuple must match the total number of blue agent. (UAV+UGB)
+    - The action must be in range between 0 and 4.
+- If UAV is included, the UAV's action comes __in front__ of UGV's action.
+    - ex) To make UAV to hover (fix): action = [0, 0] + [UGV's action]
