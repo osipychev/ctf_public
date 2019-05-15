@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue May 14 17:25:41 2019
-
-@author: shamith2
-"""
 
 import gym 
 import policy.roomba
