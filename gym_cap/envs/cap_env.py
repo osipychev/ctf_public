@@ -38,6 +38,47 @@ class CapEnv(gym.Env):
             self.interaction = self._interaction_stoch
         else: self.interaction = self._interaction_determ
 
+    def debug(self, board_condition):
+    
+        """
+        Resets the game according to our given inputs
+
+        : board_condition_file: contains the initialization constants
+        : return: void
+
+        """
+
+        # imports all initializing constants in board_condition_file as data
+        data = importlib.import_module(board_condition)
+        
+        self._env, self.team_home = CreateMap.gen_map('map', dim = data.dim, rand_zones = data.rand_zones, np_random = data.np_random)
+
+        self.policy_blue = data.policy_blue
+        self.policy_red = data.policy_red
+
+        self.action_space = spaces.Discrete(len(self.ACTION) ** (data.NUM_BLUE + data.NUM_UAV))
+
+        self.blue_win = data.blue_win
+        self.red_win = data.red_win
+
+        self.team_blue, self.team_red = self._map_to_list(self._env, self.team_home)
+
+        self.create_observation_space()
+
+        self.mode = data.mode
+
+        if data.NUM_RED == 0:
+            self.mode = "sandbox"
+
+        self.blue_win = data.blue_win
+        self.red_win = data.red_win
+
+        # Necessary for human mode
+        self.first = data.first
+
+        return self.observation_space_blue
+    
+    
     def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None):
         """
         Resets the game
