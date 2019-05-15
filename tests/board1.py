@@ -1,4 +1,3 @@
-
 import gym 
 import policy.roomba
 import policy.random
@@ -70,6 +69,8 @@ TEAM2_FLAG = 7
 OBSTACLE = 8
 
 ###############################################################################
+
+# optional constants
 
 SUGGESTION = -5
 BLACK = -2
