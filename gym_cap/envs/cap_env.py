@@ -335,14 +335,14 @@ class CapEnv(gym.Env):
 
         # Get actions from uploaded policies
         try:
-            move_list_red = self.policy_red.gen_action(self.team_red,self.observation_space_red,free_map=self.team_home)
+            move_list_red = self.policy_red.gen_action(self.team_red,self.get_obs_red,free_map=self.team_home)
         except:
             print("No valid policy for red team")
             exit()
 
         if entities_action == None:
             try:
-                move_list_blue = self.policy_blue.gen_action(self.team_blue,self.observation_space_blue,free_map=self.team_home)
+                move_list_blue = self.policy_blue.gen_action(self.team_blue,self.get_obs_blue,free_map=self.team_home)
             except:
                 print("No valid policy for blue team and no actions provided")
                 exit()
