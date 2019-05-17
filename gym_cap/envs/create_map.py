@@ -2,7 +2,7 @@ import numpy as np
 from .const import *
 
 class CreateMap:
-    """This class generates a random map
+    """This class generates and back-propogates a random map
     given dimension size, number of obstacles,
     and number of agents for each team"""
 
@@ -83,6 +83,42 @@ class CreateMap:
 
         #np.save('map.npy', new_map)
         return new_map, static_map
+    
+    @staticmethod
+    def set_custom_map(new_map):
+        """
+        Method
+            Outputs static_map when new_map is given as input.
+            Addtionally the number of agents will also be
+            counted
+        
+        Parameters
+        ----------
+        new_map        : numpy array
+            new_map
+        The necessary elements:
+            ugv_1   : blue UGV
+            ugv_2   : red UGV
+            uav_2   : red UAV
+            gray    : gray units
+            
+        """
+        static_map = np.copy(new_map)
+        element_count = dict(zip(*np.unique(new_map, return_counts=True)))
+        ugv_1 = element_count.get(TEAM1_UGV, 0)
+        ugv_2 = element_count.get(TEAM2_UGV, 0)
+        uav_1 = element_count.get(TEAM1_UAV, 0)
+        uav_2 = element_count.get(TEAM2_UAV, 0)
+        gray = element_count.get(TEAM3_UGV, 0)
+                    
+        static_map[static_map==TEAM1_UGV] = TEAM1_BACKGROUND
+        static_map[static_map==TEAM1_UAV] = TEAM1_BACKGROUND
+        static_map[static_map==TEAM2_UGV] = TEAM2_BACKGROUND
+        static_map[static_map==TEAM2_UAV] = TEAM2_BACKGROUND
+        static_map[static_map==TEAM3_UGV] = TEAM1_BACKGROUND # subject to change
+            
+        # new_map becomes static_map    
+        return new_map, static_map, [ugv_1, uav_1, ugv_2, uav_2, gray]
 
     @staticmethod
     def populate_map(new_map, code_where, code_what):
@@ -107,3 +143,5 @@ class CreateMap:
                 break
         new_map[lx,ly] = code_what
         return new_map
+    
+        

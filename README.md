@@ -42,3 +42,17 @@ pip install -U git+https://github.com/raide-project/ctf_public
     - The action must be in range between 0 and 4.
 - If UAV is included, the UAV's action comes __in front__ of UGV's action.
     - ex) To make UAV to hover (fix): action = [0, 0] + [UGV's action]
+
+## Debugging Utilities
+
+- Playing in customized board: 
+
+By passing the directory of custom board in text file, environment will use provided board setting to override board terrain and number of agents.
+
+```py
+observation = env.reset(
+    policy_blue=policy.random.PolicyGen(env.get_map, env.get_team_blue),
+    policy_red=policy.random.PolicyGen(env.get_map, env.get_team_red),
+    custom_board='test_maps/board2.txt'
+    )
+```

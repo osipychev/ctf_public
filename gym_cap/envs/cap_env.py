@@ -24,7 +24,6 @@ class CapEnv(gym.Env):
 
     def __init__(self, map_size=20, mode="random"):
         """
-        Constructor
 
         Parameters
         ----------
@@ -38,7 +37,7 @@ class CapEnv(gym.Env):
             self.interaction = self._interaction_stoch
         else: self.interaction = self._interaction_determ
 
-    def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None):
+    def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None, custom_board=None):
         """
         Resets the game
 
@@ -48,18 +47,32 @@ class CapEnv(gym.Env):
 
         """
 
-        if map_size is None:
-            self._env, self.team_home = CreateMap.gen_map('map', dim=self.map_size[0], rand_zones=STOCH_ZONES, np_random=self.np_random)
+        self.mode = mode
+
+        if custom_board is not None:
+            # Reset using pre-written custom board
+            try:
+                custom_map = np.loadtxt(custom_board, dtype = int, delimiter = " ")
+            except OSError as e:
+                raise e(f'File name {custom_board} failed to open')
+                exit() 
+
+            self._env, self.team_home, map_obj = CreateMap.set_custom_map(custom_map)
+            self.action_space = spaces.Discrete(len(self.ACTION) ** (map_obj[0] + map_obj[1]))
+            if map_obj[2] == 0:
+                self.mode = "sandbox"
         else:
+            if map_size is None:
+                map_size = self.map_size[0]
             self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
-
+            self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
+            if NUM_RED == 0:
+                self.mode = "sandbox"
+        
         self.map_size = (len(self._env), len(self._env[0]))
-
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
-
-        self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
-
+            
         self.blue_win = False
         self.red_win = False
 
@@ -67,18 +80,13 @@ class CapEnv(gym.Env):
 
         self.create_observation_space()
 
-        self.mode = mode
-
-        if NUM_RED == 0:
-            self.mode = "sandbox"
-
         self.blue_win = False
         self.red_win = False
 
         # Necessary for human mode
         self.first = True
 
-        return self.observation_space_blue
+        return self.get_obs_blue
 
     def _map_to_list(self, complete_map, static_map):
         """
