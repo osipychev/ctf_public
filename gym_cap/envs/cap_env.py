@@ -324,7 +324,7 @@ class CapEnv(gym.Env):
             print("No valid policy for red team")
             exit()
 
-        if entities_action == None:
+        if entities_action is None:
             try:
                 move_list_blue = self.policy_blue.gen_action(self.team_blue,self.observation_space_blue,free_map=self.team_home)
             except:
