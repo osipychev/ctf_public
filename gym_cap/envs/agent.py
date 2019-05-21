@@ -48,6 +48,8 @@ class Agent:
             easily place the correct home tiles
         """
         if not self.isAlive:
+            if env[self.x][self.y] == DEAD:
+                env[self.x][self.y] = team_home[self.x][self.y]   # agent replaced with home background after it dies
             return
         
         if action == "X":
