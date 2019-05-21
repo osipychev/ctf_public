@@ -1,4 +1,5 @@
 import numpy as np
+import random
 from .const import *
 
 class CreateMap:
@@ -53,6 +54,12 @@ class CreateMap:
             lx, ly = np_random.randint(0, dim, [2])
             sx, sy = np_random.randint(0, dim//5, [2]) + 1
             new_map[lx-sx:lx+sx, ly-sy:ly+sy] = OBSTACLE
+
+        element_count = dict(zip(*np.unique(new_map, return_counts=True)))
+        if element_count[TEAM1_BACKGROUND] < 1 + map_obj[0] + map_obj[1]:
+            raise Exception('Cannot fit all blue object in an given map.')
+        if element_count[TEAM2_BACKGROUND] < 1 + map_obj[2] + map_obj[3]:
+            raise Exception('Cannot fit all red object in an given map.')
 
         # define location of flags
         new_map = CreateMap.populate_map(new_map,
@@ -142,6 +149,7 @@ class CreateMap:
             if new_map[lx,ly] == code_where:
                 break
         new_map[lx,ly] = code_what
+
         return new_map
     
         
