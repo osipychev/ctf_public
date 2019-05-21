@@ -2,6 +2,7 @@
 # from gym.utils import seeding
 # from .cap_view2d import CaptureView2D
 from .const import *
+import numpy as np
 # from .create_map import CreateMap
 #from .enemy_ai import EnemyAI
 
@@ -48,148 +49,39 @@ class Agent:
         """
         if not self.isAlive:
             return
+        
         if action == "X":
             pass
-        elif action == "N":
-            # Air moves north
-            if self.air:
-                if self.y - self.step >= 0 \
-                        and env[self.x][self.y - self.step] != TEAM1_UGV \
-                        and env[self.x][self.y - self.step] != TEAM2_UGV \
-                        and env[self.x][self.y - self.step] != TEAM1_UAV \
-                        and env[self.x][self.y - self.step] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y -= self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-                elif self.y - self.step < 0:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y = 0
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-            # Ground moves north
+        
+        elif action in ["N", "S", "E", "W"]:
+            # Air moves
+            new_coord = {"N": [self.x, self.y - self.step],
+                         "S": [self.x, self.y + self.step],
+                         "E": [self.x + self.step, self.y],
+                         "W": [self.x - self.step, self.y]}
+            new_coord = new_coord[action]
+
+            # Out of bound 
+            length, width = env.shape
+            if new_coord[0] < 0: new_coord[0] = 0
+            if new_coord[1] < 0: new_coord[1] = 0
+            if new_coord[0] >= length: new_coord[0] = length-1
+            if new_coord[1] >= width: new_coord[1] = width-1
+
+            # Not able to move
+            if (self.x, self.y) == new_coord \
+                or (self.air and env[new_coord[0]][new_coord[1]] in [TEAM1_UAV, TEAM2_UAV]) \
+                or (not self.air and env[new_coord[0]][new_coord[1]] in [OBSTACLE, TEAM1_UGV, TEAM2_UGV]):
+                    return
+
+            # Make a movement
+            env[self.x][self.y] = team_home[self.x][self.y]
+            self.x, self.y = new_coord
+            channel = 0 if self.air else 1
+            if self.team == TEAM1_BACKGROUND:
+                env[self.x, self.y] = TEAM1_UAV if self.air else TEAM1_UGV
             else:
-                if self.y - self.step >= 0 \
-                        and env[self.x][self.y - self.step] != OBSTACLE \
-                        and env[self.x][self.y - self.step] != TEAM1_UGV \
-                        and env[self.x][self.y - self.step] != TEAM2_UGV \
-                        and env[self.x][self.y - self.step] != TEAM1_UAV \
-                        and env[self.x][self.y - self.step] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y -= self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UGV
-                    else:
-                        env[self.x][self.y] = TEAM2_UGV
-        elif action == "S":
-            # Air moves south
-            if self.air:
-                if self.y + self.step < len(env[0]) \
-                        and env[self.x][self.y + self.step] != TEAM1_UGV \
-                        and env[self.x][self.y + self.step] != TEAM2_UGV \
-                        and env[self.x][self.y + self.step] != TEAM1_UAV \
-                        and env[self.x][self.y + self.step] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y += self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-                elif self.y + self.step >= len(env[0]):
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y = len(env[0]) - 1
-                    if self.team == 1:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-            # Ground moves south
-            else:
-                if self.y + self.step < len(env[0]) \
-                        and env[self.x][self.y + self.step] != OBSTACLE \
-                        and env[self.x][self.y + self.step] != TEAM1_UGV \
-                        and env[self.x][self.y + self.step] != TEAM2_UGV \
-                        and env[self.x][self.y + self.step] != TEAM1_UAV \
-                        and env[self.x][self.y + self.step] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.y += self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UGV
-                    else:
-                        env[self.x][self.y] = TEAM2_UGV
-        elif action == "E":
-            # Air moves east
-            if self.air:
-                if self.x + self.step < len(env) \
-                        and env[self.x + self.step][self.y] != TEAM1_UGV \
-                        and env[self.x + self.step][self.y] != TEAM2_UGV \
-                        and env[self.x + self.step][self.y] != TEAM1_UAV \
-                        and env[self.x + self.step][self.y] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x += self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-                elif self.x + self.step >= len(env):
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x = len(env) - 1
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-            # Ground moves east
-            else:
-                if self.x + self.step < len(env) \
-                        and env[self.x + self.step][self.y] != OBSTACLE \
-                        and env[self.x + self.step][self.y] != TEAM1_UGV \
-                        and env[self.x + self.step][self.y] != TEAM2_UGV \
-                        and env[self.x + self.step][self.y] != TEAM1_UAV \
-                        and env[self.x + self.step][self.y] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x += self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UGV
-                    else:
-                        env[self.x][self.y] = TEAM2_UGV
-        elif action == "W":
-            # Air moves west
-            if self.air:
-                if self.x - self.step >= 0 \
-                        and env[self.x - self.step][self.y] != TEAM1_UGV \
-                        and env[self.x - self.step][self.y] != TEAM2_UGV \
-                        and env[self.x - self.step][self.y] != TEAM1_UAV \
-                        and env[self.x - self.step][self.y] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x -= self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-                elif self.x - self.step < 0:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x = 0
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UAV
-                    else:
-                        env[self.x][self.y] = TEAM2_UAV
-            # Ground moves west
-            else:
-                if self.x - self.step >= 0 \
-                        and env[self.x - self.step][self.y] != OBSTACLE \
-                        and env[self.x - self.step][self.y] != TEAM1_UGV \
-                        and env[self.x - self.step][self.y] != TEAM2_UGV \
-                        and env[self.x - self.step][self.y] != TEAM1_UAV \
-                        and env[self.x - self.step][self.y] != TEAM2_UAV:
-                    env[self.x][self.y] = team_home[self.x][self.y]
-                    self.x -= self.step
-                    if self.team == TEAM1_BACKGROUND:
-                        env[self.x][self.y] = TEAM1_UGV
-                    else:
-                        env[self.x][self.y] = TEAM2_UGV
+                env[self.x, self.y] = TEAM2_UAV if self.air else TEAM2_UGV        
         else:
             print("error: wrong action selected")
 
