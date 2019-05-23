@@ -117,6 +117,8 @@ class PolicyGen:
             for movement in range(5):
                 if is_possible_to_move(movement):
                     action_pool.append(movement)
+            if action_pool == []:
+                action_pool = [0]
             action = np.random.choice(action_pool) # pick from possible movements
 
         # Obtain information based on the vision
@@ -125,7 +127,7 @@ class PolicyGen:
 
         if self.enemy_flag_code in elements: # Flag Found
             # move towards the flag
-            fx, fy = field[self.enemy_flag_code][0] # flag location (coord. of 'view')
+            fx, fy = field.get(self.enemy_flag_code, [0,0])[0] # flag location (coord. of 'view')
             if fy > 2: # move down
                 action = 3
             elif fy < 2: # move up
@@ -134,6 +136,8 @@ class PolicyGen:
                 action = 2
             elif fx < 2: # move right
                 action = 4
+            else:
+                action = 0 # do not move
 
         if np.random.random() <= self.exploration: # Exploration
             action = np.random.randint(1,5)
