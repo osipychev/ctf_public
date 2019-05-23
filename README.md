@@ -49,10 +49,27 @@ pip install -U git+https://github.com/raide-project/ctf_public
 
 By passing the directory of custom board in text file, environment will use provided board setting to override board terrain and number of agents.
 
+cap_test.py
 ```py
+...
 observation = env.reset(
     policy_blue=policy.random.PolicyGen(env.get_map, env.get_team_blue),
     policy_red=policy.random.PolicyGen(env.get_map, env.get_team_red),
     custom_board='test_maps/board2.txt'
     )
+...
 ```
+
+test_map/board2.txt
+```py
+0 0 2 4 1 4 1 1 1
+2 2 8 8 4 1 1 1 1
+0 0 8 8 1 1 1 1 1
+6 0 0 1 1 7 0 0 0
+0 0 0 1 8 8 0 0 0
+0 0 2 4 8 8 0 0 0
+1 1 1 0 0 0 1 1 1
+1 1 1 0 0 0 1 1 1
+1 1 1 0 0 0 1 1 1
+```
+* board elements are separated by space.
