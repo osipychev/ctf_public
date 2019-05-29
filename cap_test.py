@@ -51,9 +51,10 @@ try:
         rscore.append(reward)
         print("Time: %.2f s, score: %.2f" %
             ((time.time() - start_time),np.asarray(rscore).mean()))
-                
+
 except KeyboardInterrupt:
     env.close()
     del gym.envs.registry.env_specs['cap-v0']
 
-    print("CtF environment Close")
+    print("CtF environment Closed")
+

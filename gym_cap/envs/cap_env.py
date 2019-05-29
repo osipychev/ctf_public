@@ -73,15 +73,16 @@ class CapEnv(gym.Env):
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
             
-        self.blue_win = False
-        self.red_win = False
-
         self.team_blue, self.team_red = self._map_to_list(self._env, self.team_home)
 
         self.create_observation_space()
 
         self.blue_win = False
         self.red_win = False
+        self.red_flag = False
+        self.blue_flag = False
+        self.red_die = False
+        self.blue_die = False
 
         # Necessary for human mode
         self.first = True
@@ -397,11 +398,14 @@ class CapEnv(gym.Env):
             if i.isAlive and not i.air:
                 has_alive_entity = True
                 locx, locy = i.get_loc()
-                if self.team_home[locx][locy] == TEAM1_FLAG:
+                if self.team_home[locx][locy] == TEAM1_FLAG:  # TEAM 1 == BLUE
                     self.red_win = True
+                    self.blue_flag = True
+                    
         # TODO Change last condition for multi agent model
         if not has_alive_entity and self.mode != "sandbox" and self.mode != "human_blue":
             self.blue_win = True
+            self.red_die = True
 
         has_alive_entity = False
         for i in self.team_blue:
@@ -410,8 +414,11 @@ class CapEnv(gym.Env):
                 locx, locy = i.get_loc()
                 if self.team_home[locx][locy] == TEAM2_FLAG:
                     self.blue_win = True
+                    self.red_flag = True
+                    
         if not has_alive_entity:
             self.red_win = True
+            self.blue_die = True
 
         reward = self.create_reward()
 

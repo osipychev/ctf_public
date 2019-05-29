@@ -73,3 +73,38 @@ test_map/board2.txt
 1 1 1 0 0 0 1 1 1
 ```
 * board elements are separated by space.
+
+## Policy Evaluation
+
+cap_eval.py : Testing script analyzes the total rate of win, rate of win by capturing flag, rate of win by killing the other team and plots histogram of the mean score of a team in all episodes. It also prints the mean score, standard deviation of the mean score, total time for all episodes and for one episode and average steps taken per episodes.
+
+Example)
+``` bash
+python cap_eval.py --episode 3000 --blue_policy roomba
+```
+
+### Valid Arguments
+
+- episode: number of iterations to analyze (default: 1000)
+- blue_policy: policy to be implmented for blue team (default: random)
+- red_policy: policy to be implmented for blue team (default: random)
+- num_blue: number of blue ugv agents (default: 4)
+- num_red: number of red ugv agents (default: 4)
+- num_uav: number of uav agents (default: 0)
+- map_size: size of map (default: 20)
+- time_step: maximum number of steps per iteration to be completed by the teams (default: 150)
+
+```py
+> python cap_eval.py --episode 50 --blue_policy roomba
+
+Episodes Progress Bar
+
+100%|██████████████████████████████████████████████████████████████████████████████████| 50/50 [00:03<00:00, 14.66it/s]
+-------------------------------------------- Statistics --------------------------------------
+win # overall in 50 episodes: {'BLUE': 31, 'NEITHER': 1, 'RED': 18}
+win # in capturing flag    : {'BLUE': 4, 'NEITHER': 15, 'RED': 31}
+win # in killing other team: {'BLUE': 14, 'NEITHER': 36}
+time per episode: 0.06638088703155517 s
+total time: 3.5574886798858643 s
+mean steps: 3318.1
+```
