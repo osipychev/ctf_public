@@ -106,6 +106,7 @@ RL_SUGGESTIONS = False
 STOCH_TRANSITIONS = False
 RED_PARTIAL = False
 BLUE_PARTIAL = False
+```
 
 ## Policy Evaluation
 
