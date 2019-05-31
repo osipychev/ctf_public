@@ -23,6 +23,9 @@ STOCH_TRANSITIONS = False
 STOCH_ATTACK = False
 STOCH_ZONES = False
 
+RED_PARTIAL = True
+BLUE_PARTIAL = True
+
 # MapConst
 """ Defining the constants for map and environment """
 # WORLD_H = 100

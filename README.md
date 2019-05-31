@@ -74,6 +74,39 @@ test_map/board2.txt
 ```
 * board elements are separated by space.
 
+
+- Custom Initialization
+
+The environment is mostly fixed with default configuration numbers, but some numbers are possible to be altered by passing a configuration file.
+
+cap_test.py
+``` py
+...
+observation = env.reset(
+    map_size=20,
+    policy_blue=policy.random.PolicyGen(env.get_map, env.get_team_blue),
+    policy_red=policy.random.PolicyGen(env.get_map, env.get_team_red),
+    config_path='config.ini'
+    )
+...
+```
+
+config.ini
+``` py
+[elements]
+NUM_BLUE=4
+NUM_RED=4
+NUM_UAV=2
+NUM_GRAY=0
+
+[settings]
+STOCH_ATTACK = True
+STOCH_ZONES = True
+RL_SUGGESTIONS = False
+STOCH_TRANSITIONS = False
+RED_PARTIAL = False
+BLUE_PARTIAL = False
+
 ## Policy Evaluation
 
 cap_eval.py : Testing script analyzes the total rate of win, rate of win by capturing flag, rate of win by killing the other team and plots histogram of the mean score of a team in all episodes. It also prints the mean score, standard deviation of the mean score, total time for all episodes and for one episode and average steps taken per episodes.
@@ -107,4 +140,3 @@ win # in killing other team: {'BLUE': 14, 'NEITHER': 36}
 time per episode: 0.06638088703155517 s
 total time: 3.5574886798858643 s
 mean steps: 3318.1
-```

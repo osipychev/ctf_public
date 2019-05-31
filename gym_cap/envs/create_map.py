@@ -32,6 +32,8 @@ class CreateMap:
             4   : gray units
         """
 
+        assert map_obj is not None
+
         # init the seed and set new_map to zeros
         if np_random == None:
             np_random = np.random

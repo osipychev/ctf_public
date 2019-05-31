@@ -1,3 +1,5 @@
+import io
+import configparser
 import random
 import sys
 
@@ -8,6 +10,7 @@ import numpy as np
 
 from .agent import *
 from .create_map import CreateMap
+from gym_cap.envs import const
 
 """
 Requires that all units initially exist in home zone.
@@ -31,13 +34,46 @@ class CapEnv(gym.Env):
             CapEnv object
         """
         self.seed()
-        self.reset(map_size, mode=mode)
         self.viewer = None
-        if STOCH_ATTACK:
-            self.interaction = self._interaction_stoch
-        else: self.interaction = self._interaction_determ
+        self._parse_config()
 
-    def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None, custom_board=None):
+        self.reset(map_size, mode=mode)
+
+    def _parse_config(self, config_path=None):
+        # Set configuration constants
+        # If config path is specified, read the file
+        # Default values are set in const.py file
+
+        config_param = { # Configurable parameters
+                'elements': ['NUM_BLUE', 'NUM_RED', 'NUM_UAV', 'NUM_GRAY'],
+                'settings': ['RL_SUGGESTIONS', 'STOCH_TRANSITIONS',
+                        'STOCH_ATTACK', 'STOCH_ZONES', 'RED_PARTIAL', 'BLUE_PARTIAL']
+            }
+        config_datatype = {
+                'elements': [int, int, int ,int],
+                'settings': [bool, bool, bool, bool, bool, bool]
+            }
+
+        if config_path is None:
+            # Default configuration
+            get = lambda key, name: getattr(const, name)
+        else:
+            # Custom configuration
+            config = configparser.ConfigParser()
+            config.read(config_path)
+            get = lambda key, name: config.get(key, name, fallback=getattr(const, name))
+
+        try:
+            # Set environment attributes
+            for section in config_param:
+                for name, datatype in zip(config_param[section], config_datatype[section]):
+                    setattr(self, name, datatype(get(section, name)))
+        except Exception as e:
+            print(e)
+            print('Configuration import fails: recheck whether all config variables are included')
+            exit()
+
+    def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None, custom_board=None, config_path=None):
         """
         Resets the game
 
@@ -47,7 +83,30 @@ class CapEnv(gym.Env):
 
         """
 
+        # ASSERTIONS
+
+
+        # WARNINGS
+        if config_path is not None and custom_board is not None:
+            print('Custom configuration path is specified, but the custom board is given. Configuration will be ignored.')
+
+        # Pull default values
+        if config_path is not None:
+            self._parse_config(config_path)
+        if map_size is None:
+            map_size = self.map_size[0]
+        if policy_blue is not None:
+            self.policy_blue = policy_blue
+        if policy_red is not None:
+            self.policy_red = policy_red
+
+        # Store Arguments
         self.mode = mode
+
+        if self.STOCH_ATTACK:
+            self.interaction = self._interaction_stoch
+        else:
+            self.interaction = self._interaction_determ
 
         if custom_board is not None:
             # Reset using pre-written custom board
@@ -62,14 +121,14 @@ class CapEnv(gym.Env):
             if map_obj[2] == 0:
                 self.mode = "sandbox"
         else:
-            if map_size is None:
-                map_size = self.map_size[0]
-            self._env, self.team_home = CreateMap.gen_map('map', map_size, rand_zones=STOCH_ZONES, np_random=self.np_random)
-            self.action_space = spaces.Discrete(len(self.ACTION) ** (NUM_BLUE + NUM_UAV))
-            if NUM_RED == 0:
+            map_obj = [self.NUM_BLUE, self.NUM_UAV, self.NUM_RED, self.NUM_UAV, self.NUM_GRAY]
+            self._env, self.team_home = CreateMap.gen_map('map',
+                    map_size, rand_zones=self.STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
+            self.action_space = spaces.Discrete(len(self.ACTION) ** (self.NUM_BLUE + self.NUM_UAV))
+            if self.NUM_RED == 0:
                 self.mode = "sandbox"
-        
         self.map_size = (len(self._env), len(self._env[0]))
+
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
             
@@ -207,11 +266,17 @@ class CapEnv(gym.Env):
 
     @property
     def get_obs_blue(self):
-        return np.copy(self.observation_space_blue)
+        if self.BLUE_PARTIAL:
+            return np.copy(self.observation_space_blue)
+        else:
+            return self.get_full_state
 
     @property
     def get_obs_red(self):
-        red_view = np.copy(self.observation_space_red)
+        if self.RED_PARTIAL:
+            red_view = np.copy(self.observation_space_red)
+        else:
+            red_view = self.get_full_state
 
         # Change red's perspective same as blue
         swap = [
@@ -352,32 +417,33 @@ class CapEnv(gym.Env):
         if entities_action is None:
             try:
                 move_list_blue = self.policy_blue.gen_action(self.team_blue,self.get_obs_blue,free_map=self.team_home)
-            except:
+            except Exception as e:
+                print(e)
                 print("No valid policy for blue team and no actions provided")
                 exit()
         elif type(entities_action) is int:
-            if entities_action >= len(self.ACTION) ** (NUM_BLUE + NUM_UAV):
+            if entities_action >= len(self.ACTION) ** (self.NUM_BLUE + self.NUM_UAV):
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
-            while len(move_list) < (NUM_BLUE + NUM_UAV):
+                         There are " + str(self.NUM_BLUE + self.NUM_UAV) + " entities.")
+            while len(move_list) < (self.NUM_BLUE + self.NUM_UAV):
                 move_list_blue.append(entities_action % 5)
                 entities_action = int(entities_action / 5)
         else:
-            if len(entities_action) > NUM_BLUE + NUM_UAV:
+            if len(entities_action) > self.NUM_BLUE + self.NUM_UAV:
                 sys.exit("ERROR: You entered too many moves. \
-                         There are " + str(NUM_BLUE + NUM_UAV) + " entities.")
+                         There are " + str(self.NUM_BLUE + self.NUM_UAV) + " entities.")
             move_list_blue = entities_action
 
 
         # Move team1
         for idx, act in enumerate(move_list_blue):
-            if STOCH_TRANSITIONS and self.np_random.rand() < 0.1:
+            if self.STOCH_TRANSITIONS and self.np_random.rand() < 0.1:
                 act = self.np_random.randint(0,len(self.ACTION))
             self.team_blue[idx].move(self.ACTION[act], self._env, self.team_home)
 
         # Move team2
         for idx, act in enumerate(move_list_red):
-            if STOCH_TRANSITIONS and self.np_random.rand() < 0.1:
+            if self.STOCH_TRANSITIONS and self.np_random.rand() < 0.1:
                 act = self.np_random.randint(0,len(self.ACTION))
             self.team_red[idx].move(self.ACTION[act], self._env, self.team_home)
 
