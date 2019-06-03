@@ -9,6 +9,7 @@ DOs/Denis Osipychev
 """
 
 import numpy as np
+import gym_cap.envs.const as const
 
 
 class PolicyGen:
@@ -68,7 +69,7 @@ class PolicyGen:
         # search for a flag until finds it
         if self.flag_location == None:
 
-            loc = self.scan_obs(observation,self.flag_code)
+            loc = self.scan_obs(observation, self.flag_code)
             if len(loc) is not 0:
                 self.flag_location = loc[0]
 
@@ -87,7 +88,6 @@ class PolicyGen:
 
     def random_search(self, agent, index, obs):
         """Generate 1 action for given agent object."""
-        x,y = agent.get_loc()
         action = self.random.randint(0, 5)
 
         return action
@@ -116,7 +116,7 @@ class PolicyGen:
 
         for y in range(len(obs)):
             for x in range(len(obs[0])):
-                if obs[x][y] == value:
+                if obs[x][y] == const.TEAM1_FLAG:
                     location.append([x,y])
 
         return location

@@ -9,8 +9,8 @@ DOs/Denis Osipychev
 
 """
 
-#import numpy as np
-
+import numpy as np
+import gym_cap.envs.const as const
 
 class PolicyGen:
     """Policy generator class for CtF env.
@@ -34,6 +34,7 @@ class PolicyGen:
             free_map (np.array): 2d map of static environment.
             agent_list (list): list of all friendly units.
         """
+        self.team = agent_list[0].team
         self.free_map = free_map 
         self.heading_right = [True] * len(agent_list) #: Attr to track directions.
         
@@ -65,7 +66,7 @@ class PolicyGen:
         """Generate 1 action for given agent object."""
         x,y = agent.get_loc()
         action = 0
-        
+
         #approach the boarder.
         if (y > len(self.free_map[0])/2 and 
             self.free_map[x][y-1] == self.free_map[x][y]):
@@ -82,12 +83,12 @@ class PolicyGen:
             #if in the map and have free space at right - go right.
             if (self.heading_right[index] and 
                 x+1 < len(self.free_map) and
-                obs[x+1][y] == self.free_map[x][y]): 
+                obs[x+1][y] == const.TEAM1_BACKGROUND):
                 action = 2
             #if in the map and have free space at left - go left.
             elif (not self.heading_right[index] and
                   x > 0 and
-                  obs[x-1][y] == self.free_map[x][y]): 
+                  obs[x - 1][y] == const.TEAM1_BACKGROUND):
                 action = 4
             #otherwise - turn around.
             else:
