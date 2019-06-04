@@ -79,7 +79,6 @@ class Agent:
             # Make a movement
             env[self.x][self.y] = team_home[self.x][self.y]
             self.x, self.y = new_coord
-            channel = 0 if self.air else 1
             if self.team == TEAM1_BACKGROUND:
                 env[self.x, self.y] = TEAM1_UAV if self.air else TEAM1_UGV
             else:

@@ -183,7 +183,6 @@ class CapEnv(gym.Env):
         self    : object
             CapEnv object
         """
-        reward = 0
 
         if self.blue_win:
             return 100
@@ -191,12 +190,11 @@ class CapEnv(gym.Env):
             return -100
 
         # Dead enemy team gives .5/total units for each dead unit
-        for i in range(len(self.team_red)):
-            if not self.team_red[i].isAlive:
-                reward += (50.0 / len(self.team_red))
-        for i in range(len(self.team_blue)):
-            if not self.team_blue[i].isAlive:
-                reward -= (50.0 / len(self.team_blue))
+        reward = 0
+        red_alive = sum([entity.isAlive for entity in self.team_red])
+        blue_alive = sum([entity.isAlive for entity in self.team_blue])
+        reward += 50.0 * red_alive / TEAM2_UGV
+        reward -= 50.0 * blue_alive / TEAM1_UGV
 
         return reward
 
@@ -212,7 +210,9 @@ class CapEnv(gym.Env):
             Team to create obs space for
         """
 
-        self.observation_space_blue = np.full_like(self._env, -1)
+        #self.observation_space_blue = np.full_like(self._env, -1)
+        self.observation_space_blue = np.empty(self._env.shape)
+        self.observation_space_blue[:] = -1
         for agent in self.team_blue:
             if not agent.isAlive:
                 continue
@@ -225,7 +225,9 @@ class CapEnv(gym.Env):
                             not (locy < 0 or locy > self.map_size[1] - 1):
                         self.observation_space_blue[locx][locy] = self._env[locx][locy]
 
-        self.observation_space_red = np.full_like(self._env, -1)
+        #self.observation_space_red = np.full_like(self._env, -1)
+        self.observation_space_red= np.empty(self._env.shape)
+        self.observation_space_red[:] = -1
         for agent in self.team_red:
             if not agent.isAlive:
                 continue
@@ -240,7 +242,7 @@ class CapEnv(gym.Env):
 
 
         # TODO need to be added observation for grey team
-        self.observation_space_grey = np.full_like(self._env, -1)
+        # self.observation_space_grey = np.full_like(self._env, -1)
 
     @property
     def get_full_state(self):
@@ -451,11 +453,7 @@ class CapEnv(gym.Env):
 
 
         # Check for dead
-        for entity in self.team_blue:
-            if entity.air or not entity.isAlive:
-                continue
-            self.interaction(entity)
-        for entity in self.team_red:
+        for entity in self.team_blue + self.team_red:
             if entity.air or not entity.isAlive:
                 continue
             self.interaction(entity)
@@ -492,12 +490,10 @@ class CapEnv(gym.Env):
 
         self.create_observation_space()
 
-        self.state = np.copy(self._env)
-
         isDone = self.red_win or self.blue_win
         info = {}
 
-        return self.state, reward, isDone, info
+        return self.get_full_state, reward, isDone, info
 
     def render(self, mode='human'):
         """

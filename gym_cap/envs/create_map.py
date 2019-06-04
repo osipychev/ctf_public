@@ -39,10 +39,10 @@ class CreateMap:
             np_random = np.random
         if not in_seed == None:
             np.random.seed(in_seed)
-        new_map = np.zeros([dim, dim], dtype=int)
+        new_map = np.empty([dim, dim], dtype=int)
 
         # zones init
-        new_map[:,:] = TEAM2_BACKGROUND
+        new_map[:] = TEAM2_BACKGROUND
         if rand_zones:
             sx, sy = np_random.randint(dim//2, 4*dim//5, [2])
             lx, ly = np_random.randint(0, dim - max(sx,sy)-1, [2])
@@ -64,31 +64,25 @@ class CreateMap:
             raise Exception('Cannot fit all red object in an given map.')
 
         # define location of flags
-        new_map = CreateMap.populate_map(new_map,
-                             TEAM1_BACKGROUND, TEAM1_FLAG)
-        new_map = CreateMap.populate_map(new_map,
-                             TEAM2_BACKGROUND, TEAM2_FLAG)
+        team1_pool = np.argwhere(new_map==TEAM1_BACKGROUND).tolist()
+        team2_pool = np.argwhere(new_map==TEAM2_BACKGROUND).tolist()
+        random.shuffle(team1_pool)
+        random.shuffle(team2_pool)
+
+        CreateMap.populate_map(new_map, team1_pool, TEAM1_FLAG, 1)
+        CreateMap.populate_map(new_map, team2_pool, TEAM2_FLAG, 1)
 
         # the static map is ready
         static_map = np.copy(new_map)
 
-        for i in range(map_obj[0]):
-            new_map = CreateMap.populate_map(new_map,
-                                 TEAM1_BACKGROUND, TEAM1_UGV)
-        for i in range(map_obj[1]):
-            new_map = CreateMap.populate_map(new_map,
-                                 TEAM1_BACKGROUND, TEAM1_UAV)
-        for i in range(map_obj[2]):
-            new_map = CreateMap.populate_map(new_map,
-                                 TEAM2_BACKGROUND, TEAM2_UGV)
-        for i in range(map_obj[3]):
-            new_map = CreateMap.populate_map(new_map,
-                                 TEAM2_BACKGROUND, TEAM2_UAV)
+        CreateMap.populate_map(new_map, team1_pool, TEAM1_UGV, map_obj[0])
+        CreateMap.populate_map(new_map, team1_pool, TEAM1_UAV, map_obj[1])
+        CreateMap.populate_map(new_map, team2_pool, TEAM2_UGV, map_obj[2])
+        CreateMap.populate_map(new_map, team2_pool, TEAM2_UAV, map_obj[3])
 
         # TODO: change zone for grey team to complete map
-        for i in range(map_obj[4]):
-            new_map = CreateMap.populate_map(new_map,
-                                 TEAM2_BACKGROUND, TEAM3_UGV)
+        #new_map = CreateMap.populate_map(new_map,
+        #                     TEAM2_BACKGROUND, TEAM3_UGV, map_obj[4])
 
         #np.save('map.npy', new_map)
         return new_map, static_map
@@ -130,7 +124,7 @@ class CreateMap:
         return new_map, static_map, [ugv_1, uav_1, ugv_2, uav_2, gray]
 
     @staticmethod
-    def populate_map(new_map, code_where, code_what):
+    def populate_map(new_map:np.ndarray, code_where:list, code_what:int, number:int=1):
         """
         Function
             Adds "code_what" to a random location of "code_where" at "new_map"
@@ -139,19 +133,17 @@ class CreateMap:
         ----------
         new_map     : 2d numpy array
             Map of the environment
-        code_where  : int
-            Code of the territory that is being populated
+        code_where  : list
+            List of coordinate to put element 
         code_what   : int
             Value assigned to the random location of the map
+        number      : int
+            Number of element to place
         """
-        dimx, dimy = new_map.shape
-        while True:
-            lx = np.random.randint(0, dimx)
-            ly = np.random.randint(0, dimy)
-            if new_map[lx,ly] == code_where:
-                break
-        new_map[lx,ly] = code_what
+        if number == 0:
+            return
 
-        return new_map
-    
-        
+        args = np.array(code_where[:number])
+        del code_where[:number]
+
+        new_map[args[:,0], args[:,1]] = code_what
