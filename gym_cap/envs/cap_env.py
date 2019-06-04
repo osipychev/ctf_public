@@ -117,17 +117,15 @@ class CapEnv(gym.Env):
                 exit() 
 
             self._env, self.team_home, map_obj = CreateMap.set_custom_map(custom_map)
-            self.action_space = spaces.Discrete(len(self.ACTION) ** (map_obj[0] + map_obj[1]))
-            if map_obj[2] == 0:
-                self.mode = "sandbox"
         else:
             map_obj = [self.NUM_BLUE, self.NUM_UAV, self.NUM_RED, self.NUM_UAV, self.NUM_GRAY]
             self._env, self.team_home = CreateMap.gen_map('map',
                     map_size, rand_zones=self.STOCH_ZONES, np_random=self.np_random, map_obj=map_obj)
-            self.action_space = spaces.Discrete(len(self.ACTION) ** (self.NUM_BLUE + self.NUM_UAV))
-            if self.NUM_RED == 0:
-                self.mode = "sandbox"
+
         self.map_size = (len(self._env), len(self._env[0]))
+        self.action_space = spaces.Discrete(len(self.ACTION) ** (map_obj[0] + map_obj[1]))
+        if map_obj[2] == 0:
+            self.mode = "sandbox"
 
         if policy_blue is not None: self.policy_blue = policy_blue
         if policy_red is not None: self.policy_red = policy_red
@@ -263,6 +261,10 @@ class CapEnv(gym.Env):
     @property
     def get_map(self):
         return np.copy(self.team_home)
+
+    @property
+    def observation_space(self):
+        return self.get_obs_blue() 
 
     @property
     def get_obs_blue(self):
