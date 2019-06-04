@@ -132,9 +132,6 @@ class CapEnv(gym.Env):
         if map_obj[2] == 0:
             self.mode = "sandbox"
 
-        if policy_blue is not None: self.policy_blue = policy_blue
-        if policy_red is not None: self.policy_red = policy_red
-            
         self.team_blue, self.team_red = self._map_to_list(self._env, self.team_home)
 
         self.create_observation_space()
