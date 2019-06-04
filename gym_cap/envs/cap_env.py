@@ -25,7 +25,7 @@ class CapEnv(gym.Env):
 
     ACTION = ["X", "N", "E", "S", "W"]
 
-    def __init__(self, map_size=20, mode="random"):
+    def __init__(self, map_size=20, mode="random", **kwargs):
         """
 
         Parameters
@@ -37,7 +37,12 @@ class CapEnv(gym.Env):
         self.viewer = None
         self._parse_config()
 
-        self.reset(map_size, mode=mode)
+        self.reset(map_size, mode=mode,
+                policy_blue=kwargs.get('policy_blue', None),
+                policy_red=kwargs.get('policy_red', None),
+                custom_board=kwargs.get('custom_board', None),
+                config_path=kwargs.get('config_path', None),
+                )
 
     def _parse_config(self, config_path=None):
         # Set configuration constants
