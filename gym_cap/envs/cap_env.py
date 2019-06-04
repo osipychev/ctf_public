@@ -495,7 +495,7 @@ class CapEnv(gym.Env):
         isDone = self.red_win or self.blue_win
         info = {}
 
-        return self.get_full_state, reward, isDone, info
+        return self.get_obs_blue, reward, isDone, info
 
     def render(self, mode='human'):
         """
