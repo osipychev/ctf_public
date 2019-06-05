@@ -5,6 +5,7 @@ from .const import *
 import numpy as np
 # from .create_map import CreateMap
 #from .enemy_ai import EnemyAI
+import math
 
 
 class Agent:
@@ -122,6 +123,86 @@ class Agent:
     def report_loc(self):
         print("report: position x:%d, y:%d" % (self.x, self.y))
 
+    def get_obs(self, env, com_ground=False, com_air=False, distance=None, freq=1.0, *args):
+        if self.team == BLUE:
+            myTeam = env.get_team_blue
+        else:
+            myTeam = env.get_team_red
+
+        a = 39              # env.map_size[0]*2-1
+        b = 39              # env.map_size[1]*2-1
+        obs = np.full(shape=(a, b), fill_value=UNKNOWN)
+        val = env.get_full_state
+
+        if not self.isAlive:        # if target agent is dead, return all -1
+            return obs
+
+        loc = self.get_loc()
+        x, y = loc[0], loc[1]
+        for i in range(-self.range, self.range + 1):
+            for j in range(-self.range, self.range + 1):
+                locx, locy = i + loc[0], j + loc[1]
+                if (i * i + j * j <= self.range ** 2) and \
+                        not (locx < 0 or locx > env.map_size[0] - 1) and \
+                        not (locy < 0 or locy > env.map_size[1] - 1):
+                    obs[locx+int(a/2)-loc[0]][locy+int(b/2)-loc[1]] = val[locx][locy]
+                else:
+                    obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = OBSTACLE
+
+        def distance_list(location, agents, distance):
+            List = []
+            for agent in agents:
+                loc = agent.get_loc()
+                dist = math.hypot(loc[0] - location[0], loc[1] - location[1])
+                if dist < distance:
+                    List.append(agent)
+            return List
+
+        if distance is not None:
+            myTeam = distance_list(loc, myTeam, distance)
+
+        if not com_ground and not com_air:
+            return obs
+
+        for agent in myTeam:
+            if not agent.isAlive:
+                continue
+            if not com_air and agent.air:
+                continue
+            elif com_air and agent.air:
+                loc = agent.get_loc()
+
+                for i in range(-self.range, self.range + 1):
+                    for j in range(-self.range, self.range + 1):
+                        locx, locy = i + loc[0], j + loc[1]
+                        if (i * i + j * j <= self.range ** 2) and \
+                                not (locx < 0 or locx > env.map_size[0] - 1) and \
+                                not (locy < 0 or locy > env.map_size[1] - 1):
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = val[locx][locy]
+                        else:
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
+
+                        if freq is not None and np.random.random > freq:
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
+
+            elif not com_ground and not agent.air:
+                continue
+            elif com_ground and not agent.air:
+                loc = agent.get_loc()
+                for i in range(-self.range, self.range + 1):
+                    for j in range(-self.range, self.range + 1):
+                        locx, locy = i + loc[0], j + loc[1]
+                        if (i * i + j * j <= self.range ** 2) and \
+                                not (locx < 0 or locx > env.map_size[0] - 1) and \
+                                not (locy < 0 or locy > env.map_size[1] - 1):
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = val[locx][locy]
+                        else:
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
+
+                        if freq is not None and np.random.random > freq:
+                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
+
+        return obs
 
 class GroundVehicle(Agent):
     """This is a child class for ground agents. Inherited from Agent class.

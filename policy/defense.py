@@ -42,7 +42,7 @@ class PolicyGen:
         self.random = np.random
         self.exploration = 0.5
 
-        self.flag_code = 6 if self.team == 0 else 7
+        self.flag_code = const.TEAM1_FLAG6
 
     def gen_action(self, agent_list, observation, free_map=None):
         """Action generation method.
