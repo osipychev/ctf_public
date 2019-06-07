@@ -107,9 +107,17 @@ class CapEnv(gym.Env):
         if map_size is None:
             map_size = self.map_size[0]
         if policy_blue is not None:
-            self.policy_blue = policy_blue
+            try:
+                self.policy_blue = policy_blue.PolicyGen(self.get_map, self.get_team_blue)
+            except Exception as e:
+                print(e)
+                raise Exception("Blue policy does not have Policy_gen object")
         if policy_red is not None:
-            self.policy_red = policy_red
+            try:
+                self.policy_red = policy_red.PolicyGen(self.get_map, self.get_team_red)
+            except Exception as e:
+                print(e)
+                raise Exception("Red policy does not have Policy_gen object")
 
         # Store Arguments
         self.mode = mode
@@ -274,7 +282,7 @@ class CapEnv(gym.Env):
 
     @property
     def observation_space(self):
-        return self.get_obs_blue() 
+        return self.get_obs_blue
 
     @property
     def get_obs_blue(self):
@@ -308,7 +316,6 @@ class CapEnv(gym.Env):
     @property
     def get_obs_grey(self):
         return np.copy(self.observation_space_grey)
-
 
     def _interaction_determ(self, entity):
         """
@@ -437,6 +444,7 @@ class CapEnv(gym.Env):
             if entities_action >= len(self.ACTION) ** (self.NUM_BLUE + self.NUM_UAV):
                 sys.exit("ERROR: You entered too many moves. \
                          There are " + str(self.NUM_BLUE + self.NUM_UAV) + " entities.")
+            move_list_blue = []
             while len(move_list) < (self.NUM_BLUE + self.NUM_UAV):
                 move_list_blue.append(entities_action % 5)
                 entities_action = int(entities_action / 5)

@@ -56,8 +56,8 @@ if __name__ == '__main__':
     asteps = []
     
     # reset the environment and select the policies for each of the team
-    observation = env.reset(map_size = int(map_size), policy_blue = blue_policy.PolicyGen(env.get_map, env.get_team_blue), 
-                            policy_red = red_policy.PolicyGen(env.get_map, env.get_team_red))
+    observation = env.reset(map_size = int(map_size), policy_blue = blue_policy,
+                            policy_red = red_policy)
     
     print("  Episodes Progress Bar \n")
     start_time = time.time()

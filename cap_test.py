@@ -19,8 +19,8 @@ rscore = []
 
 # reset the environment and select the policies for each of the team
 observation = env.reset(map_size=20,
-                        policy_blue=policy.roomba.PolicyGen(env.get_map, env.get_team_blue),
-                        policy_red=policy.random.PolicyGen(env.get_map, env.get_team_red))
+                        policy_blue=policy.roomba,
+                        policy_red=policy.random)
 
 try:
     while True:
