@@ -72,11 +72,16 @@ class CapEnv(gym.Env):
             # Set environment attributes
             for section in config_param:
                 for name, datatype in zip(config_param[section], config_datatype[section]):
-                    setattr(self, name, datatype(get(section, name)))
+                    value = get(section, name)
+                    if datatype is bool:
+                        value = True if value == 'True' else False
+                    elif datatype is int or datatype is float:
+                        value = datatype(value)
+                    setattr(self, name, value)
         except Exception as e:
             print(e)
             print('Configuration import fails: recheck whether all config variables are included')
-            exit()
+            raise Exception
 
     def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None, custom_board=None, config_path=None):
         """
