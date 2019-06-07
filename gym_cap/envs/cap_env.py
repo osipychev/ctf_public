@@ -74,7 +74,8 @@ class CapEnv(gym.Env):
                 for name, datatype in zip(config_param[section], config_datatype[section]):
                     value = get(section, name)
                     if datatype is bool:
-                        value = True if value == 'True' else False
+                        if type(value) == str:
+                            value = True if value == 'True' else False
                     elif datatype is int or datatype is float:
                         value = datatype(value)
                     setattr(self, name, value)
