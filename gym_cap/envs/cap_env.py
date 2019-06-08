@@ -99,34 +99,24 @@ class CapEnv(gym.Env):
 
         # WARNINGS
         if config_path is not None and custom_board is not None:
-            print('Custom configuration path is specified, but the custom board is given. Configuration will be ignored.')
+            print('Custom configuration path is specified, but the custom board is given. Some configuration will be ignored.')
 
-        # Pull default values
+        # STORE ARGUMENTS
+        self.mode = mode
+
+        # LOAD DEFAULT PARAMETERS
         if config_path is not None:
             self._parse_config(config_path)
         if map_size is None:
             map_size = self.map_size[0]
-        if policy_blue is not None:
-            try:
-                self.policy_blue = policy_blue.PolicyGen(self.get_map, self.get_team_blue)
-            except Exception as e:
-                print(e)
-                raise Exception("Blue policy does not have Policy_gen object")
-        if policy_red is not None:
-            try:
-                self.policy_red = policy_red.PolicyGen(self.get_map, self.get_team_red)
-            except Exception as e:
-                print(e)
-                raise Exception("Red policy does not have Policy_gen object")
 
-        # Store Arguments
-        self.mode = mode
-
+        # SET INTERACTION
         if self.STOCH_ATTACK:
             self.interaction = self._interaction_stoch
         else:
             self.interaction = self._interaction_determ
 
+        # INITIALIZE MAP
         if custom_board is not None:
             # Reset using pre-written custom board
             try:
@@ -146,7 +136,22 @@ class CapEnv(gym.Env):
         if map_obj[2] == 0:
             self.mode = "sandbox"
 
+        # INITIALIZE TEAM
         self.team_blue, self.team_red = self._map_to_list(self._env, self.team_home)
+
+        # INITIALIZE POLICY
+        if policy_blue is not None:
+            try:
+                self.policy_blue = policy_blue.PolicyGen(self.team_home, self.team_blue)
+            except Exception as e:
+                print(e)
+                raise Exception("Blue policy does not have Policy_gen object")
+        if policy_red is not None:
+            try:
+                self.policy_red = policy_red.PolicyGen(self.team_home, self.team_red)
+            except Exception as e:
+                print(e)
+                raise Exception("Red policy does not have Policy_gen object")
 
         self.create_observation_space()
 
