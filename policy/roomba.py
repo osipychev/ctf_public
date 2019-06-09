@@ -46,6 +46,7 @@ class PolicyGen:
         self.flag_location = None
         self.enemy_flag_code = 7
         self.enemy_code = 4
+        self.range = 13
 
     def gen_action(self, agent_list, observation, free_map=None):
         """Action generation method.
@@ -93,7 +94,7 @@ class PolicyGen:
         # Expand the observation with wall
         # - in order to avoid dealing with the boundary
         obsx, obsy = obs.shape
-        padding = agent.range
+        padding = self.range
         _obs = np.ones((obsx+2*padding, obsy+2*padding)) * 8
         _obs[padding:obsx+padding, padding:obsy+padding] = obs
         obs = _obs
