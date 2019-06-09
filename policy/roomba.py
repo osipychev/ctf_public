@@ -46,7 +46,7 @@ class PolicyGen:
         self.flag_location = None
         self.enemy_flag_code = 7
         self.enemy_code = 4
-        self.range = 13
+        self.range = 5
 
     def gen_action(self, agent_list, observation, free_map=None):
         """Action generation method.
