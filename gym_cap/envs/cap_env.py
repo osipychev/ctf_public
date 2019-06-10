@@ -434,7 +434,8 @@ class CapEnv(gym.Env):
         # Get actions from uploaded policies
         try:
             move_list_red = self.policy_red.gen_action(self.team_red,self.get_obs_red,free_map=self.team_home)
-        except:
+        except Exception as e:
+            print(e)
             print("No valid policy for red team")
             exit()
 
