@@ -208,7 +208,7 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random > freq:
+                        if freq is not None and np.random.random() > freq:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
             elif not com_ground and not agent.air:
@@ -225,7 +225,7 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random > freq:
+                        if freq is not None and np.random.random() > freq:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
         return obs
