@@ -513,6 +513,12 @@ class CapEnv(gym.Env):
         self.create_observation_space()
 
         isDone = self.red_win or self.blue_win
+        
+        # Update individual's memory
+        for agent in self.team_blue + self.team_red:
+            if agent.memory_mode == "fog":
+                agent.update_memory(env=self)
+        
         info = {}
 
         return self.get_obs_blue, reward, isDone, info

@@ -25,10 +25,13 @@ class Agent:
         """
         self.isAlive = True
         self.x, self.y = loc
+        self.length, self.breath = map_only.shape
         self.step = UGV_STEP
         self.range = UGV_RANGE
         self.a_range = UGV_A_RANGE
         self.air = False
+        self.memory = np.full((self.length, self.breath), -1)
+        self.memory_mode = "None"
         #self.ai = EnemyAI(map_only)
         self.team = team_number
         self.move_selected = False
@@ -86,7 +89,30 @@ class Agent:
                 env[self.x, self.y] = TEAM2_UAV if self.air else TEAM2_UGV        
         else:
             print("error: wrong action selected")
+    
+    def update_memory(self, env):
 
+        """
+        saves/updates individual map of an agent
+
+        """
+        
+        obs = self.get_obs(env = env)
+        leng, breth = obs.shape
+        l, b = leng//2, breth//2
+        terrain = [TEAM1_FLAG, TEAM2_FLAG, OBSTACLE, TEAM1_BACKGROUND, TEAM2_BACKGROUND]
+        loc_x, loc_y = self.get_loc()
+             
+        coord_x, coord_y = np.where(np.isin(obs, terrain))
+        offset = np.array([(l - loc_x), (b - loc_y)])
+        offset_x, offset_y = offset
+        coord_x = coord_x[np.logical_and(coord_x >= offset_x, coord_x < self.length + offset_x)]
+        coord_y = coord_y[np.logical_and(coord_y >= offset_y, coord_y < self.breath + offset_y)]
+        for coord in zip(coord_x, coord_y):
+            self.memory[coord - offset] = obs[coord]
+
+        return self.memory
+    
     def individual_reward(self, env):
         """
         Generates reward for individual
