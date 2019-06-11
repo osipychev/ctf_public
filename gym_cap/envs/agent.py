@@ -91,27 +91,22 @@ class Agent:
             print("error: wrong action selected")
     
     def update_memory(self, env):
-
         """
         saves/updates individual map of an agent
 
         """
         
-        obs = self.get_obs(env = env)
+        obs = self.get_obs(env=env)
         leng, breth = obs.shape
-        l, b = leng//2, breth//2
-        terrain = [TEAM1_FLAG, TEAM2_FLAG, OBSTACLE, TEAM1_BACKGROUND, TEAM2_BACKGROUND]
+        leng, breth = leng//2, breth//2
+        l, b = self.memory.shape
         loc_x, loc_y = self.get_loc()
-             
-        coord_x, coord_y = np.where(np.isin(obs, terrain))
-        offset = np.array([(l - loc_x), (b - loc_y)])
-        offset_x, offset_y = offset
-        coord_x = coord_x[np.logical_and(coord_x >= offset_x, coord_x < self.length + offset_x)]
-        coord_y = coord_y[np.logical_and(coord_y >= offset_y, coord_y < self.breath + offset_y)]
-        for coord in zip(coord_x, coord_y):
-            self.memory[coord - offset] = obs[coord]
+        offset_x, offset_y = leng - loc_x, breth - loc_y
+        obs = obs[offset_x: offset_x + l, offset_y: offset_y + b]    
+        coord = obs != UNKNOWN
+        self.memory[coord] = env.team_home[coord]
 
-        return self.memory
+        return
     
     def individual_reward(self, env):
         """
