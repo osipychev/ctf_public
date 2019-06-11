@@ -141,3 +141,17 @@ win # in killing other team: {'BLUE': 14, 'NEITHER': 36}
 time per episode: 0.06638088703155517 s
 total time: 3.5574886798858643 s
 mean steps: 3318.1
+```
+
+## Communication Settings
+
+```py
+def get_obs(self, env, com_ground=False, com_air=False, distance=None, freq=1.0, *args):
+```
+
+The method returns the observation for a specific agent. If communication is allowed between ground or air, observation for that agent is expanded to include vision from other agents.
+
+### Parameters:
+- com_ground and com_air (boolean): toggle communication between ground/air units. 
+- distance (int): the maximum distance between units for which communication is  
+- freq (0<int<1.0): the probability that communication goes through    
