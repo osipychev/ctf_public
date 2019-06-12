@@ -29,7 +29,6 @@ COM_DISTANCE = -1
 COM_FREQUENCY = 1.0
 
 # Memory Default Setting
-[memory]
 INDIV_MEMORY = None      # ['None', 'fog', 'Full']
 TEAM_MEMORY = None       # ['None', 'fog', 'Full']
 RENDER_INDIV_MEMORY = False
