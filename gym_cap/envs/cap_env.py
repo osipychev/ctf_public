@@ -42,7 +42,7 @@ class CapEnv(gym.Env):
                 policy_red=kwargs.get('policy_red', None),
                 custom_board=kwargs.get('custom_board', None),
                 config_path=kwargs.get('config_path', None),
-                )
+            )
 
     def _parse_config(self, config_path=None):
         # Set configuration constants
@@ -51,11 +51,15 @@ class CapEnv(gym.Env):
 
         config_param = { # Configurable parameters
                 'elements': ['NUM_BLUE', 'NUM_RED', 'NUM_UAV', 'NUM_GRAY'],
+                'communication': ['COM_GROUND', 'COM_AIR', 'COM_DISTANCE', 'COM_FREQUENCY'],
+                'memory': ['INDIV_MEMORY', 'TEAM_MEMORY', 'RENDER_INDIV_MEMORY', 'RENDER_TEAM_MEMORY'],
                 'settings': ['RL_SUGGESTIONS', 'STOCH_TRANSITIONS',
                         'STOCH_ATTACK', 'STOCH_ZONES', 'RED_PARTIAL', 'BLUE_PARTIAL']
             }
         config_datatype = {
                 'elements': [int, int, int ,int],
+                'communication': [bool, bool, int, float],
+                'memory': [str, str, bool, bool],
                 'settings': [bool, bool, bool, bool, bool, bool]
             }
 

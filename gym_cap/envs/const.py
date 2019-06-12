@@ -1,5 +1,3 @@
-
-
 # TeamConst
 """ Defining the constants for agents and teams """
 RED = 10
@@ -16,15 +14,26 @@ UGV_RANGE = 3
 UAV_A_RANGE = 0
 UGV_A_RANGE = 2
 
-# Model
+# Game Default Setting
 RL_SUGGESTIONS = False
-
 STOCH_TRANSITIONS = False
 STOCH_ATTACK = False
 STOCH_ZONES = False
-
 RED_PARTIAL = True
 BLUE_PARTIAL = True
+
+# Communication Default Setting
+COM_GROUND = False
+COM_AIR = False
+COM_DISTANCE = -1
+COM_FREQUENCY = 1.0
+
+# Memory Default Setting
+[memory]
+INDIV_MEMORY = None      # ['None', 'fog', 'Full']
+TEAM_MEMORY = None       # ['None', 'fog', 'Full']
+RENDER_INDIV_MEMORY = False
+RENDER_TEAM_MEMORY = False
 
 # MapConst
 """ Defining the constants for map and environment """

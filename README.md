@@ -99,6 +99,18 @@ NUM_RED=4
 NUM_UAV=2
 NUM_GRAY=0
 
+[communication]
+COM_GROUND = False
+COM_AIR = False
+COM_DISTANCE = -1    # -1 for infinite distance. Otherwise
+COM_FREQUENCY = 1.0  # Random chance of communication
+
+[memory]
+INDIV_MEMORY = None      # ['None', 'fog', 'Full']
+TEAM_MEMORY = None       # ['None', 'fog', 'Full']
+RENDER_INDIV_MEMORY = False
+RENDER_TEAM_MEMORY = False
+
 [settings]
 STOCH_ATTACK = True
 STOCH_ZONES = True
