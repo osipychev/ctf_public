@@ -7,7 +7,6 @@ import numpy as np
 #from .enemy_ai import EnemyAI
 import math
 
-
 class Agent:
     """This is a parent class for all agents.
     It creates an instance of agent in specific location"""
@@ -144,7 +143,12 @@ class Agent:
     def report_loc(self):
         print("report: position x:%d, y:%d" % (self.x, self.y))
 
-    def get_obs(self, env, com_ground=False, com_air=False, distance=None, freq=1.0, *args):
+    def get_obs(self, env):
+        com_air = env.COM_AIR
+        com_ground = env.COM_GROUND
+        com_distance = env.COM_DISTANCE
+        com_frequency = env.COM_FREQUENCY
+
         if self.team == BLUE:
             myTeam = env.get_team_blue
         else:
@@ -170,17 +174,17 @@ class Agent:
                 else:
                     obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = OBSTACLE
 
-        def distance_list(location, agents, distance):
+        def distance_list(location, agents):
             List = []
             for agent in agents:
                 loc = agent.get_loc()
                 dist = math.hypot(loc[0] - location[0], loc[1] - location[1])
-                if dist < distance:
+                if dist < com_distance:
                     List.append(agent)
             return List
 
-        if distance is not None:
-            myTeam = distance_list(loc, myTeam, distance)
+        if not com_distance == -1:
+            myTeam = distance_list(loc, myTeam)
 
         if not com_ground and not com_air:
             return obs
@@ -203,7 +207,7 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random() > freq:
+                        if com_frequency is not None and np.random.random() > com_frequency:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
             elif not com_ground and not agent.air:
@@ -220,7 +224,7 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random() > freq:
+                        if com_frequency is not None and np.random.random() > com_frequency:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
         return obs
