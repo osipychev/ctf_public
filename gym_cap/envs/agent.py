@@ -6,7 +6,7 @@ import numpy as np
 # from .create_map import CreateMap
 #from .enemy_ai import EnemyAI
 import math
-
+import gym_cap.envs.const as const
 
 class Agent:
     """This is a parent class for all agents.
@@ -35,6 +35,10 @@ class Agent:
         #self.ai = EnemyAI(map_only)
         self.team = team_number
         self.move_selected = False
+        self.COM_AIR = const.COM_AIR
+        self.COM_GROUND = const.COM_GROUND
+        self.COM_DISTANCE = const.COM_DISTANCE
+        self.COM_FREQUENCY = const.COM_FREQUENCY
 
     def move(self, action, env, team_home):
         """
@@ -144,7 +148,7 @@ class Agent:
     def report_loc(self):
         print("report: position x:%d, y:%d" % (self.x, self.y))
 
-    def get_obs(self, env, com_ground=False, com_air=False, distance=None, freq=1.0, *args):
+    def get_obs(self, env):
         if self.team == BLUE:
             myTeam = env.get_team_blue
         else:
@@ -170,27 +174,27 @@ class Agent:
                 else:
                     obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = OBSTACLE
 
-        def distance_list(location, agents, distance):
+        def distance_list(location, agents):
             List = []
             for agent in agents:
                 loc = agent.get_loc()
                 dist = math.hypot(loc[0] - location[0], loc[1] - location[1])
-                if dist < distance:
+                if dist < self.COM_DISTANCE:
                     List.append(agent)
             return List
 
-        if distance is not None:
-            myTeam = distance_list(loc, myTeam, distance)
+        if not self.COM_DISTANCE == -1:
+            myTeam = distance_list(loc, myTeam)
 
-        if not com_ground and not com_air:
+        if not self.COM_GROUND and not self.COM_AIR:
             return obs
 
         for agent in myTeam:
             if not agent.isAlive:
                 continue
-            if not com_air and agent.air:
+            if not self.COM_AIR and agent.air:
                 continue
-            elif com_air and agent.air:
+            elif self.COM_AIR and agent.air:
                 loc = agent.get_loc()
 
                 for i in range(-self.range, self.range + 1):
@@ -203,12 +207,12 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random() > freq:
+                        if self.COM_FREQUENCY is not None and np.random.random() > self.COM_FREQUENCY:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
-            elif not com_ground and not agent.air:
+            elif not self.COM_GROUND and not agent.air:
                 continue
-            elif com_ground and not agent.air:
+            elif self.COM_GROUND and not agent.air:
                 loc = agent.get_loc()
                 for i in range(-self.range, self.range + 1):
                     for j in range(-self.range, self.range + 1):
@@ -220,7 +224,7 @@ class Agent:
                         else:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
 
-                        if freq is not None and np.random.random() > freq:
+                        if self.COM_FREQUENCY is not None and np.random.random() > self.COM_FREQUENCY:
                             obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
 
         return obs
