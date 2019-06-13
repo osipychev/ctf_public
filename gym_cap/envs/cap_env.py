@@ -35,6 +35,8 @@ class CapEnv(gym.Env):
         """
         self.seed()
         self.viewer = None
+        self.blue_memory = np.empty((map_size, map_size))
+        self.red_memory = np.empty((map_size, map_size))
         self._parse_config()
 
         self.reset(map_size, mode=mode,
@@ -156,6 +158,16 @@ class CapEnv(gym.Env):
             except Exception as e:
                 print(e)
                 raise Exception("Red policy does not have Policy_gen object")
+
+        # INITIALIZE MEMORY
+        if self.TEAM_MEMORY == "fog":
+            self.blue_memory[:] = const.UNKNOWN
+            self.red_memory[:] = const.UNKNOWN
+
+        if self.INDIV_MEMORY == "fog":
+            for agent in self.team_blue + self.team_red:
+                agent.memory[:] = const.UNKNOWN
+                agent.memory_mode = "fog"
 
         self.create_observation_space()
 
@@ -414,6 +426,36 @@ class CapEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+    def update_global_memory(self, env):
+        """ 
+        team memory map
+        
+        """
+        
+        l, b = self.blue_memory.shape
+        for blue_agent in self.team_blue:
+            b_obs = blue_agent.get_obs(env=env)
+            leng, breth = b_obs.shape
+            leng, breth = leng//2, breth//2
+            b_coord_x, b_coord_y = blue_agent.get_loc()
+            b_offset_x, b_offset_y = leng - b_coord_x, breth - b_coord_y
+            b_obs = b_obs[b_offset_x: b_offset_x + l, b_offset_y: b_offset_y + b]   
+            b_coord = b_obs!= const.UNKNOWN
+            self.blue_memory[b_coord] = self.team_home[b_coord]
+             
+        l, b = self.red_memory.shape
+        for red_agent in self.team_red:
+            r_obs = red_agent.get_obs(env=env)
+            leng, breth = r_obs.shape
+            leng, breth = leng//2, breth//2
+            r_coord_x, r_coord_y = red_agent.get_loc()
+            r_offset_x, r_offset_y = leng - r_coord_x, breth - r_coord_y
+            r_obs = r_obs[r_offset_x: r_offset_x + l, r_offset_y: r_offset_y + b]   
+            r_coord = r_obs!= const.UNKNOWN
+            self.red_memory[r_coord] = self.team_home[r_coord]
+        
+        return
+
     def step(self, entities_action=None, cur_suggestions=None):
         """
         Takes one step in the cap the flag game
@@ -523,6 +565,10 @@ class CapEnv(gym.Env):
             if agent.memory_mode == "fog":
                 agent.update_memory(env=self)
         
+        # Update team memory
+        if self.TEAM_MEMORY == "fog":
+            self.update_global_memory(env=self)
+
         info = {}
 
         return self.get_obs_blue, reward, isDone, info
@@ -538,24 +584,79 @@ class CapEnv(gym.Env):
         mode    : string
             Defines what will be rendered
         """
-        SCREEN_W = 600
-        SCREEN_H = 600
+        if (self.RENDER_INDIV_MEMORY == True and self.INDIV_MEMORY == "fog") or (self.RENDER_TEAM_MEMORY == True and self.TEAM_MEMORY == "fog"):
+            SCREEN_W = 1200
+            SCREEN_H = 600
 
-        if self.viewer is None:
-            from gym.envs.classic_control import rendering
-            self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
-            self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+            if self.viewer is None:
+                from gym.envs.classic_control import rendering
+                self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+                self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+    
+            self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
 
-        self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
+            self._env_render(self.team_home,
+                            [7, 7], [SCREEN_H//2-10, SCREEN_H//2-10])
+            self._env_render(self.observation_space_blue,
+                            [7+1.49*SCREEN_H//3, 7], [SCREEN_H//2-10, SCREEN_H//2-10])
+            self._env_render(self.observation_space_red,
+                            [7+1.49*SCREEN_H//3, 7+1.49*SCREEN_H//3], [SCREEN_H//2-10, SCREEN_H//2-10])
+            self._env_render(self._env,
+                            [7, 7+1.49*SCREEN_H//3], [SCREEN_H//2-10, SCREEN_H//2-10])
 
-        self._env_render(self.team_home,
-                        [10, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
-        self._env_render(self.observation_space_blue,
-                        [10+SCREEN_W//2, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
-        self._env_render(self.observation_space_red,
-                        [10+SCREEN_W//2, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
-        self._env_render(self._env,
-                        [10, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
+            # ind blue agent memory rendering
+            for num_blue, blue_agent in enumerate(self.team_blue):
+                if num_blue < 2:
+                    blue_agent.INDIV_MEMORY = self.INDIV_MEMORY
+                    if blue_agent.INDIV_MEMORY == "fog" and self.RENDER_INDIV_MEMORY == True:
+                        self._env_render(blue_agent.memory,
+                                         [900+num_blue*SCREEN_H//4, 7], [SCREEN_H//4-10, SCREEN_H//4-10])
+                else:
+                    blue_agent.INDIV_MEMORY = self.INDIV_MEMORY
+                    if blue_agent.INDIV_MEMORY == "fog" and self.RENDER_INDIV_MEMORY == True:
+                        self._env_render(blue_agent.memory,
+                                         [900+(num_blue-2)*SCREEN_H//4, 7+SCREEN_H//4], [SCREEN_H//4-10, SCREEN_H//4-10])
+
+            # ind red agent memory rendering
+            for num_red, red_agent in enumerate(self.team_red):
+                if num_red < 2:
+                    red_agent.INDIV_MEMORY = self.INDIV_MEMORY
+                    if red_agent.INDIV_MEMORY == "fog" and self.RENDER_INDIV_MEMORY == True:
+                        self._env_render(red_agent.memory,
+                                         [900+num_red*SCREEN_H//4, 7+1.49*SCREEN_H//2], [SCREEN_H//4-10, SCREEN_H//4-10])
+    
+                else:
+                    red_agent.INDIV_MEMORY = self.INDIV_MEMORY
+                    if red_agent.INDIV_MEMORY == "fog" and self.RENDER_INDIV_MEMORY == True:
+                        self._env_render(red_agent.memory,
+                                         [900+(num_red-2)*SCREEN_H//4, 7+SCREEN_H//2], [SCREEN_H//4-10, SCREEN_H//4-10])
+
+            if self.TEAM_MEMORY == "fog" and self.RENDER_TEAM_MEMORY == True:
+                # blue team memory rendering
+                self._env_render(self.blue_memory,
+                                 [7+2.98*SCREEN_H//3, 7], [SCREEN_H//2-10, SCREEN_H//2-10])
+                # red team memory rendering    
+                self._env_render(self.red_memory,
+                                 [7+2.98*SCREEN_H//3, 7+1.49*SCREEN_H//3], [SCREEN_H//2-10, SCREEN_H//2-10])
+        else:
+            SCREEN_W = 600
+            SCREEN_H = 600
+            
+            if self.viewer is None:
+                from gym.envs.classic_control import rendering
+                self.viewer = rendering.Viewer(SCREEN_W, SCREEN_H)
+                self.viewer.set_bounds(0, SCREEN_W, 0, SCREEN_H)
+                
+            self.viewer.draw_polygon([(0, 0), (SCREEN_W, 0), (SCREEN_W, SCREEN_H), (0, SCREEN_H)], color=(0, 0, 0))
+            
+            self._env_render(self.team_home,
+                            [5, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
+            self._env_render(self.observation_space_blue,
+                            [5+SCREEN_W//2, 10], [SCREEN_W//2-10, SCREEN_H//2-10])
+            self._env_render(self.observation_space_red,
+                            [5+SCREEN_W//2, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
+            self._env_render(self._env,
+                            [5, 10+SCREEN_H//2], [SCREEN_W//2-10, SCREEN_H//2-10])
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 

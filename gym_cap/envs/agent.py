@@ -29,7 +29,7 @@ class Agent:
         self.range = UGV_RANGE
         self.a_range = UGV_A_RANGE
         self.air = False
-        self.memory = np.full((self.length, self.breath), -1)
+        self.memory = np.empty((self.length, self.breath))
         self.memory_mode = "None"
         #self.ai = EnemyAI(map_only)
         self.team = team_number
@@ -172,7 +172,7 @@ class Agent:
                         not (locy < 0 or locy > env.map_size[1] - 1):
                     obs[locx+int(a/2)-loc[0]][locy+int(b/2)-loc[1]] = val[locx][locy]
                 else:
-                    obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = OBSTACLE
+                    obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = UNKNOWN
 
         def distance_list(location, agents):
             List = []
