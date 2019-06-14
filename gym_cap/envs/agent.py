@@ -174,58 +174,59 @@ class Agent:
                 else:
                     obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = UNKNOWN
 
-        def distance_list(location, agents):
-            List = []
-            for agent in agents:
-                loc = agent.get_loc()
-                dist = math.hypot(loc[0] - location[0], loc[1] - location[1])
-                if dist < com_distance:
-                    List.append(agent)
-            return List
-
-        if not com_distance == -1:
-            myTeam = distance_list(loc, myTeam)
-
         if not com_ground and not com_air:
             return obs
 
         for agent in myTeam:
             if not agent.isAlive:
                 continue
+            loc = agent.get_loc()
+            if not com_distance == -1:
+                if math.hypot(loc[0] - x, loc[1] - y) < com_distance:
+                    continue
             if not com_air and agent.air:
                 continue
             elif com_air and agent.air:
-                loc = agent.get_loc()
-
-                for i in range(-self.range, self.range + 1):
-                    for j in range(-self.range, self.range + 1):
+                for i in range(-agent.range, agent.range + 1):
+                    for j in range(-agent.range, agent.range + 1):
                         locx, locy = i + loc[0], j + loc[1]
-                        if (i * i + j * j <= self.range ** 2) and \
+                        coordx = locx + int(a / 2) - x
+                        coordy = locy + int(b / 2) - y
+                        if (i * i + j * j <= agent.range ** 2) and \
                                 not (locx < 0 or locx > env.map_size[0] - 1) and \
                                 not (locy < 0 or locy > env.map_size[1] - 1):
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = val[locx][locy]
-                        else:
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
+                            obs[coordx][coordy] = val[locx][locy]
 
-                        if com_frequency is not None and np.random.random() > com_frequency:
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
+                            if com_frequency is not None and np.random.random() > com_frequency:
+                                obs[coordx][coordy] = UNKNOWN
+
+                        elif (0 <= coordx < a) and (0 <= coordy < b):
+                            obs[coordx][coordy] = OBSTACLE
+
+                            if com_frequency is not None and np.random.random() > com_frequency:
+                                obs[coordx][coordy] = UNKNOWN
 
             elif not com_ground and not agent.air:
                 continue
             elif com_ground and not agent.air:
-                loc = agent.get_loc()
-                for i in range(-self.range, self.range + 1):
-                    for j in range(-self.range, self.range + 1):
+                for i in range(-agent.range, agent.range + 1):
+                    for j in range(-agent.range, agent.range + 1):
                         locx, locy = i + loc[0], j + loc[1]
-                        if (i * i + j * j <= self.range ** 2) and \
+                        coordx = locx + int(a / 2) - x
+                        coordy = locy + int(b / 2) - y
+                        if (i * i + j * j <= agent.range ** 2) and \
                                 not (locx < 0 or locx > env.map_size[0] - 1) and \
                                 not (locy < 0 or locy > env.map_size[1] - 1):
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = val[locx][locy]
-                        else:
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = OBSTACLE
+                            obs[coordx][coordy] = val[locx][locy]
 
-                        if com_frequency is not None and np.random.random() > com_frequency:
-                            obs[locx + int(a / 2) - x][locy + int(b / 2) - y] = UNKNOWN
+                            if com_frequency is not None and np.random.random() > com_frequency:
+                                obs[coordx][coordy] = UNKNOWN
+
+                        elif (0 <= coordx < a) and (0 <= coordy < b):
+                            obs[coordx][coordy] = OBSTACLE
+
+                            if com_frequency is not None and np.random.random() > com_frequency:
+                                obs[coordx][coordy] = UNKNOWN
 
         return obs
 
