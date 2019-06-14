@@ -14,7 +14,6 @@ start_time = time.time()
 env = gym.make("cap-v0") # initialize the environment
 
 done = False
-t = 0
 rscore = []
 
 # reset the environment and select the policies for each of the team
@@ -24,6 +23,7 @@ observation = env.reset(map_size=20,
 
 try:
     while True:
+        t = 0
         while not done:
     
             #you are free to select a random action
