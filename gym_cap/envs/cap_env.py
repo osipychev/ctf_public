@@ -56,13 +56,13 @@ class CapEnv(gym.Env):
                 'communication': ['COM_GROUND', 'COM_AIR', 'COM_DISTANCE', 'COM_FREQUENCY'],
                 'memory': ['INDIV_MEMORY', 'TEAM_MEMORY', 'RENDER_INDIV_MEMORY', 'RENDER_TEAM_MEMORY'],
                 'settings': ['RL_SUGGESTIONS', 'STOCH_TRANSITIONS',
-                        'STOCH_ATTACK', 'STOCH_ZONES', 'RED_PARTIAL', 'BLUE_PARTIAL']
+                        'STOCH_ATTACK', 'STOCH_ATTACK_BIAS', 'STOCH_ZONES', 'RED_PARTIAL', 'BLUE_PARTIAL']
             }
         config_datatype = {
                 'elements': [int, int, int ,int],
                 'communication': [bool, bool, int, float],
                 'memory': [str, str, bool, bool],
-                'settings': [bool, bool, bool, bool, bool, bool]
+                'settings': [bool, bool, bool, int, bool, bool, bool]
             }
 
         if config_path is None:
@@ -87,8 +87,7 @@ class CapEnv(gym.Env):
                     setattr(self, name, value)
         except Exception as e:
             print(e)
-            print('Configuration import fails: recheck whether all config variables are included')
-            raise Exception
+            raise Exception('Configuration import fails: recheck whether all config variables are included')
 
     def reset(self, map_size=None, mode="random", policy_blue=None, policy_red=None, custom_board=None, config_path=None):
         """
@@ -389,9 +388,9 @@ class CapEnv(gym.Env):
         n_enemies = 0
         flag = False
         if entity.team == self.team_home[loc]:
-            n_friends += 1
+            n_friends += self.STOCH_ATTACK_BIAS
         else:
-            n_enemies += 1
+            n_enemies += self.STOCH_ATTACK_BIAS
 
         for x in range(-cur_range, cur_range + 1):
             for y in range(-cur_range, cur_range + 1):
