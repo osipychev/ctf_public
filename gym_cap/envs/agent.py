@@ -148,6 +148,7 @@ class Agent:
         com_ground = env.COM_GROUND
         com_distance = env.COM_DISTANCE
         com_frequency = env.COM_FREQUENCY
+        com_obstacle = env.COM_OBSTACLE
 
         if self.team == BLUE:
             myTeam = env.get_team_blue
@@ -162,6 +163,32 @@ class Agent:
         if not self.isAlive:        # if target agent is dead, return all -1
             return obs
 
+        def obstacle(self, observation, loc):
+            posx, posy, negx, negy = True, True, True, True
+            obs = observation
+            x, y = loc[0], loc[1]
+            for i in range(1, self.range + 1):
+                if posx and (0 <= x+i < a) and obs[x + i][y] == OBSTACLE:
+                     posx = False
+                else:
+                    obs[x + i][y] = UNKNOWN
+
+                if negx and (0 <= x-i < a) and obs[x - i][y] == OBSTACLE:
+                     negx = False
+                else:
+                    obs[x - i][y] = UNKNOWN
+
+                if posy and (0 <= y+i < a) and obs[x][y + i] == OBSTACLE:
+                     posy = False
+                else:
+                    obs[x][y + i] = UNKNOWN
+
+                if negy and (0 <= y-i < a) and obs[x][y - i] == OBSTACLE:
+                     negy = False
+                else:
+                    obs[x][y - i] = UNKNOWN
+            return obs
+
         loc = self.get_loc()
         x, y = loc[0], loc[1]
         for i in range(-self.range, self.range + 1):
@@ -173,6 +200,9 @@ class Agent:
                     obs[locx+int(a/2)-loc[0]][locy+int(b/2)-loc[1]] = val[locx][locy]
                 else:
                     obs[locx + int(a/2) - loc[0]][locy + int(b/2) - loc[1]] = UNKNOWN
+
+        if com_obstacle:
+          obs = obstacle(obs, loc)
 
         if not com_ground and not com_air:
             return obs
@@ -227,6 +257,8 @@ class Agent:
 
                             if com_frequency is not None and np.random.random() > com_frequency:
                                 obs[coordx][coordy] = UNKNOWN
+                if com_obstacle:
+                    obs = obstacle(obs, loc)
 
         return obs
 

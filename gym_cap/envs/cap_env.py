@@ -53,14 +53,14 @@ class CapEnv(gym.Env):
 
         config_param = { # Configurable parameters
                 'elements': ['NUM_BLUE', 'NUM_RED', 'NUM_UAV', 'NUM_GRAY'],
-                'communication': ['COM_GROUND', 'COM_AIR', 'COM_DISTANCE', 'COM_FREQUENCY'],
+                'communication': ['COM_GROUND', 'COM_AIR', 'COM_DISTANCE', 'COM_FREQUENCY', 'COM_OBSTACLE'],
                 'memory': ['INDIV_MEMORY', 'TEAM_MEMORY', 'RENDER_INDIV_MEMORY', 'RENDER_TEAM_MEMORY'],
                 'settings': ['RL_SUGGESTIONS', 'STOCH_TRANSITIONS',
                         'STOCH_ATTACK', 'STOCH_ATTACK_BIAS', 'STOCH_ZONES', 'RED_PARTIAL', 'BLUE_PARTIAL']
             }
         config_datatype = {
                 'elements': [int, int, int ,int],
-                'communication': [bool, bool, int, float],
+                'communication': [bool, bool, int, float, bool],
                 'memory': [str, str, bool, bool],
                 'settings': [bool, bool, bool, int, bool, bool, bool]
             }

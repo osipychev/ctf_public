@@ -28,6 +28,7 @@ COM_GROUND = False
 COM_AIR = False
 COM_DISTANCE = -1
 COM_FREQUENCY = 1.0
+COM_OBSTACLE = False
 
 # Memory Default Setting
 INDIV_MEMORY = None      # ['None', 'fog', 'Full']
