@@ -258,6 +258,9 @@ class Agent:
                             if com_frequency is not None and np.random.random() > com_frequency:
                                 obs[coordx][coordy] = UNKNOWN
                 if com_obstacle:
+                    coordx = loc[0] + int(a / 2) - x
+                    coordy = loc[1] + int(b / 2) - y
+                    loc = coordx, coordy
                     obs = obstacle(obs, loc)
 
         return obs
